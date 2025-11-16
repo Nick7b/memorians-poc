@@ -1124,6 +1124,55 @@ body.memorians-poc-page {
 }
 
 /* Settings Section Styles */
+.settings-section {
+    position: relative;
+}
+
+.settings-header {
+    cursor: pointer;
+    user-select: none;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.settings-header:hover {
+    background: #f0f0f0;
+}
+
+.settings-header h3 {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-header .header-icon {
+    transition: transform 0.3s;
+    color: #667eea;
+    font-size: 0.8em;
+}
+
+.settings-header.expanded .header-icon {
+    transform: rotate(180deg);
+}
+
+.settings-status {
+    margin: 10px 0 0 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.settings-status strong {
+    color: #667eea;
+}
+
+.settings-content {
+    margin-top: 15px;
+    animation: slideDown 0.3s ease-out;
+}
+
 .settings-panel {
     margin: 20px 0;
 }

@@ -126,6 +126,8 @@
 
             this.bindEvents();
             this.initializeSettings();
+            // Apply Classic Memorial preset by default
+            this.applyPreset('classic');
             this.loadVideoGallery(); // Start by loading gallery
         },
 
@@ -202,6 +204,20 @@
         initializeSettings: function() {
             var self = this;
 
+            // Settings section expand/collapse
+            $('#settings-header').on('click', function() {
+                var $header = $(this);
+                var $content = $('#settings-content');
+
+                if ($content.is(':visible')) {
+                    $content.slideUp(300);
+                    $header.removeClass('expanded');
+                } else {
+                    $content.slideDown(300);
+                    $header.addClass('expanded');
+                }
+            });
+
             // Initialize slider values
             $('.settings-slider').each(function() {
                 var $slider = $(this);
@@ -257,6 +273,7 @@
                 // Mark preset as custom when any setting changes
                 $('#preset-config').val('custom');
                 $('#preset-description').text('Customize all settings manually');
+                $('#current-preset').text('Custom');
             });
 
             // Checkbox change events
@@ -277,6 +294,7 @@
                 // Mark preset as custom
                 $('#preset-config').val('custom');
                 $('#preset-description').text('Customize all settings manually');
+                $('#current-preset').text('Custom');
             });
 
             // Select change events
@@ -303,6 +321,7 @@
                 // Mark preset as custom
                 $('#preset-config').val('custom');
                 $('#preset-description').text('Customize all settings manually');
+                $('#current-preset').text('Custom');
             });
 
             // Color picker change
@@ -314,6 +333,7 @@
                 // Mark preset as custom
                 $('#preset-config').val('custom');
                 $('#preset-description').text('Customize all settings manually');
+                $('#current-preset').text('Custom');
             });
 
             // Advanced settings toggle
@@ -351,6 +371,16 @@
                 };
 
                 $('#preset-description').text(descriptions[preset] || 'Customize all settings manually');
+
+                // Update current preset display in header
+                var presetNames = {
+                    custom: 'Custom',
+                    classic: 'Classic Memorial',
+                    cinematic: 'Cinematic',
+                    minimal: 'Minimal',
+                    dynamic: 'Dynamic'
+                };
+                $('#current-preset').text(presetNames[preset] || 'Custom');
             });
 
             console.log('Settings initialized');

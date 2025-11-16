@@ -106,20 +106,27 @@ $force_reload = time();
         </div>
 
         <!-- Settings Section -->
-        <div class="media-section">
-            <h3>Settings</h3>
+        <div class="media-section settings-section">
+            <div class="settings-header" id="settings-header">
+                <h3>
+                    <span class="header-text">Settings</span>
+                    <span class="header-icon">▼</span>
+                </h3>
+                <p class="settings-status">Using: <strong id="current-preset">Classic Memorial</strong></p>
+            </div>
 
+            <div class="settings-content" id="settings-content" style="display: none;">
             <!-- Preset Configurations -->
             <div class="settings-group">
                 <label class="settings-label">Preset Configuration</label>
                 <select id="preset-config" class="settings-select">
                     <option value="custom">Custom</option>
-                    <option value="classic">Classic Memorial</option>
+                    <option value="classic" selected>Classic Memorial</option>
                     <option value="cinematic">Cinematic</option>
                     <option value="minimal">Minimal</option>
                     <option value="dynamic">Dynamic</option>
                 </select>
-                <p class="settings-description" id="preset-description">Customize all settings manually</p>
+                <p class="settings-description" id="preset-description">Traditional memorial with balanced settings</p>
             </div>
 
             <!-- Basic Settings -->
@@ -260,6 +267,7 @@ $force_reload = time();
                     </div>
                 </div>
             </div>
+            </div> <!-- End settings-content -->
         </div>
 
         <!-- Generate Button -->
