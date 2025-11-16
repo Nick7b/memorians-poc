@@ -138,8 +138,8 @@
         <h3>About This Video</h3>
         <p>This memorial video compilation features:</p>
         <ul>
-            <li>15 custom-selected images with Ken Burns effects</li>
-            <li>1 video clip with original audio</li>
+            <li>15-40 custom-selected images with Ken Burns effects</li>
+            <li>1-5 video clips playing to full duration</li>
             <li>Beautiful transitions between media</li>
             <li>Background music to set the mood</li>
         </ul>

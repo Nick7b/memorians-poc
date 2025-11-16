@@ -723,6 +723,7 @@
                 var dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                 var sizeStr = self.formatBytes(video.size);
                 var imageCount = video.selection && video.selection.images ? video.selection.images.length : 0;
+                var videoCount = video.selection && video.selection.videos ? video.selection.videos.length : 1;
 
                 html += '<div class="gallery-card" data-cache-key="' + video.cache_key + '">';
                 html += '  <div class="gallery-card-video">';
@@ -738,7 +739,7 @@
                 html += '    </div>';
                 html += '    <div class="gallery-card-details">';
                 html += '      <span>Template: ' + (video.template || 'classic') + '</span>';
-                html += '      <span>' + imageCount + ' images, 1 video, 1 audio</span>';
+                html += '      <span>' + imageCount + ' images, ' + videoCount + ' video' + (videoCount > 1 ? 's' : '') + '</span>';
                 html += '    </div>';
                 html += '    <div class="gallery-card-actions">';
                 html += '      <button class="gallery-delete-btn" data-cache-key="' + video.cache_key + '">Delete</button>';
