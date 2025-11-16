@@ -99,6 +99,16 @@
         // Gallery data
         videoGallery: [],
 
+        // Pagination settings
+        pagination: {
+            currentPage: 1,
+            pageSize: 5,
+            pageSizeOptions: [5, 10, 15, 20, 30],
+            totalPages: 1,
+            totalVideos: 0,
+            enableThreshold: 5 // Enable pagination when more than this many videos
+        },
+
         // Template transition defaults
         templateTransitions: {
             classic: ['fade', 'dissolve', 'smoothleft', 'smoothright'],
@@ -127,6 +137,9 @@
             this.selectedVideos = [];
             this.selectedAudio = [];
             this.selectedBackground = null;
+
+            // Load saved pagination preferences
+            this.loadPaginationPreferences();
 
             // CRITICAL: Ensure requirements are properly set with correct values
             // This prevents any corruption from previous state
@@ -1433,7 +1446,36 @@
             var self = this;
             var html = '';
 
-            $.each(this.videoGallery, function(index, video) {
+            // Update pagination info
+            this.pagination.totalVideos = this.videoGallery.length;
+            this.pagination.totalPages = Math.ceil(this.pagination.totalVideos / this.pagination.pageSize);
+
+            // Ensure current page is valid
+            if (this.pagination.currentPage > this.pagination.totalPages) {
+                this.pagination.currentPage = Math.max(1, this.pagination.totalPages);
+            }
+
+            // Calculate start and end indices for current page
+            var startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+            var endIndex = Math.min(startIndex + this.pagination.pageSize, this.pagination.totalVideos);
+
+            // Determine if pagination should be shown
+            var showPagination = this.pagination.totalVideos > this.pagination.enableThreshold;
+
+            // Get videos for current page
+            var videosToShow = showPagination ?
+                this.videoGallery.slice(startIndex, endIndex) :
+                this.videoGallery;
+
+            // Add pagination controls at the top if needed
+            if (showPagination && this.pagination.totalVideos > 0) {
+                html += this.renderPaginationControls();
+            }
+
+            // Render video cards
+            html += '<div class="gallery-videos">';
+            $.each(videosToShow, function(index, video) {
+                var actualIndex = showPagination ? startIndex + index : index;
                 var date = new Date(video.created * 1000);
                 var dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                 var sizeStr = self.formatBytes(video.size);
@@ -1504,14 +1546,25 @@
                 html += '    <div class="gallery-card-actions">';
                 html += '      <button class="gallery-action-btn gallery-play-action" data-cache-key="' + video.cache_key + '">Play</button>';
                 if (hasSettings) {
-                    html += '      <button class="gallery-action-btn gallery-settings-action" data-cache-key="' + video.cache_key + '" data-video-index="' + index + '">Settings</button>';
-                    html += '      <button class="gallery-action-btn gallery-copy-action" data-cache-key="' + video.cache_key + '" data-video-index="' + index + '">Copy</button>';
+                    html += '      <button class="gallery-action-btn gallery-settings-action" data-cache-key="' + video.cache_key + '" data-video-index="' + actualIndex + '">Settings</button>';
+                    html += '      <button class="gallery-action-btn gallery-copy-action" data-cache-key="' + video.cache_key + '" data-video-index="' + actualIndex + '">Copy</button>';
                 }
                 html += '      <button class="gallery-action-btn gallery-delete-action" data-cache-key="' + video.cache_key + '">Delete</button>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
             });
+            html += '</div>'; // Close gallery-videos
+
+            // Add pagination controls at the bottom if needed
+            if (showPagination && this.pagination.totalVideos > 0) {
+                html += this.renderPaginationControls(true); // true = bottom controls
+            }
+
+            // Add empty state message if no videos
+            if (this.pagination.totalVideos === 0) {
+                html = '<div class="gallery-empty"><p>No videos generated yet. Create your first memorial video!</p></div>';
+            }
 
             $('#gallery-grid').html(html);
 
@@ -1537,6 +1590,127 @@
                 var videoIndex = $(this).data('video-index');
                 self.copyVideoSettings(videoIndex);
             });
+
+            // Pagination event handlers
+            $('.pagination-prev').on('click', function() {
+                if (self.pagination.currentPage > 1) {
+                    self.pagination.currentPage--;
+                    self.renderGallery();
+                }
+            });
+
+            $('.pagination-next').on('click', function() {
+                if (self.pagination.currentPage < self.pagination.totalPages) {
+                    self.pagination.currentPage++;
+                    self.renderGallery();
+                }
+            });
+
+            $('.pagination-page').on('click', function() {
+                var page = parseInt($(this).data('page'));
+                if (page !== self.pagination.currentPage) {
+                    self.pagination.currentPage = page;
+                    self.renderGallery();
+                }
+            });
+
+            // Page size selector
+            $('.page-size-selector').on('change', function() {
+                self.pagination.pageSize = parseInt($(this).val());
+                self.pagination.currentPage = 1; // Reset to first page
+                self.savePaginationPreferences(); // Save preference
+                self.renderGallery();
+            });
+        },
+
+        loadPaginationPreferences: function() {
+            try {
+                var savedPageSize = localStorage.getItem('memorians_gallery_page_size');
+                if (savedPageSize && this.pagination.pageSizeOptions.includes(parseInt(savedPageSize))) {
+                    this.pagination.pageSize = parseInt(savedPageSize);
+                }
+            } catch (e) {
+                // localStorage might not be available
+                console.log('Could not load pagination preferences:', e);
+            }
+        },
+
+        savePaginationPreferences: function() {
+            try {
+                localStorage.setItem('memorians_gallery_page_size', this.pagination.pageSize);
+            } catch (e) {
+                // localStorage might not be available
+                console.log('Could not save pagination preferences:', e);
+            }
+        },
+
+        renderPaginationControls: function(isBottom) {
+            var html = '<div class="pagination-controls ' + (isBottom ? 'pagination-bottom' : 'pagination-top') + '">';
+
+            // Left side - Page size selector
+            html += '<div class="pagination-left">';
+            html += '  <label class="page-size-label">Show:</label>';
+            html += '  <select class="page-size-selector">';
+            for (var i = 0; i < this.pagination.pageSizeOptions.length; i++) {
+                var size = this.pagination.pageSizeOptions[i];
+                var selected = size === this.pagination.pageSize ? ' selected' : '';
+                html += '    <option value="' + size + '"' + selected + '>' + size + ' per page</option>';
+            }
+            html += '  </select>';
+            html += '  <span class="pagination-info">';
+            var startItem = (this.pagination.currentPage - 1) * this.pagination.pageSize + 1;
+            var endItem = Math.min(this.pagination.currentPage * this.pagination.pageSize, this.pagination.totalVideos);
+            html += '    Showing ' + startItem + '-' + endItem + ' of ' + this.pagination.totalVideos + ' videos';
+            html += '  </span>';
+            html += '</div>';
+
+            // Right side - Page navigation
+            html += '<div class="pagination-nav">';
+
+            // Previous button
+            var prevDisabled = this.pagination.currentPage === 1 ? ' disabled' : '';
+            html += '  <button class="pagination-btn pagination-prev"' + prevDisabled + '>‹ Previous</button>';
+
+            // Page numbers
+            var maxVisiblePages = 5;
+            var startPage = Math.max(1, this.pagination.currentPage - Math.floor(maxVisiblePages / 2));
+            var endPage = Math.min(this.pagination.totalPages, startPage + maxVisiblePages - 1);
+
+            // Adjust start if we're near the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // First page and ellipsis
+            if (startPage > 1) {
+                html += '  <button class="pagination-btn pagination-page" data-page="1">1</button>';
+                if (startPage > 2) {
+                    html += '  <span class="pagination-ellipsis">...</span>';
+                }
+            }
+
+            // Page numbers
+            for (var page = startPage; page <= endPage; page++) {
+                var activeClass = page === this.pagination.currentPage ? ' active' : '';
+                html += '  <button class="pagination-btn pagination-page' + activeClass + '" data-page="' + page + '">' + page + '</button>';
+            }
+
+            // Last page and ellipsis
+            if (endPage < this.pagination.totalPages) {
+                if (endPage < this.pagination.totalPages - 1) {
+                    html += '  <span class="pagination-ellipsis">...</span>';
+                }
+                html += '  <button class="pagination-btn pagination-page" data-page="' + this.pagination.totalPages + '">' + this.pagination.totalPages + '</button>';
+            }
+
+            // Next button
+            var nextDisabled = this.pagination.currentPage === this.pagination.totalPages ? ' disabled' : '';
+            html += '  <button class="pagination-btn pagination-next"' + nextDisabled + '>Next ›</button>';
+
+            html += '</div>';
+            html += '</div>';
+
+            return html;
         },
 
         playGalleryVideo: function(cacheKey) {
@@ -1570,8 +1744,20 @@
                 success: function(response) {
                     if (response && response.success) {
                         console.log('Video deleted successfully');
-                        // Reload gallery
-                        self.loadVideoGallery();
+
+                        // Remove video from local array to update pagination immediately
+                        self.videoGallery = self.videoGallery.filter(function(v) {
+                            return v.cache_key !== cacheKey;
+                        });
+
+                        // Check if current page is still valid after deletion
+                        var newTotalPages = Math.ceil(self.videoGallery.length / self.pagination.pageSize);
+                        if (self.pagination.currentPage > newTotalPages && newTotalPages > 0) {
+                            self.pagination.currentPage = newTotalPages;
+                        }
+
+                        // Re-render gallery with updated pagination
+                        self.renderGallery();
                     } else {
                         alert('Failed to delete video: ' + (response.message || 'Unknown error'));
                     }
