@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MEMORIANS_POC_VERSION', '1.9.1');
+define('MEMORIANS_POC_VERSION', '1.9.2');
 define('MEMORIANS_POC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MEMORIANS_POC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MEMORIANS_POC_MEDIA_DIR', MEMORIANS_POC_PLUGIN_DIR . 'media/');
@@ -54,9 +54,9 @@ function memorians_poc_activate() {
     // Store version for auto-flush on updates
     update_option('memorians_poc_version', MEMORIANS_POC_VERSION);
 
-    // Create .htaccess to allow MP4 access but deny other files
+    // Create .htaccess to allow media file access
     $htaccess_path = MEMORIANS_POC_CACHE_DIR . '.htaccess';
-    $htaccess_content = "# Deny access by default\nOrder deny,allow\nDeny from all\n\n# Allow access to MP4 videos only\n<FilesMatch \"\\.mp4$\">\n    Order allow,deny\n    Allow from all\n</FilesMatch>";
+    $htaccess_content = "# Bypass WordPress rewrites for media files\n<IfModule mod_rewrite.c>\n    RewriteEngine Off\n</IfModule>\n\n# Set proper MIME types\n<IfModule mod_mime.c>\n    AddType video/mp4 .mp4\n    AddType image/jpeg .jpg .jpeg\n    AddType image/png .png\n    AddType image/webp .webp\n</IfModule>\n\n# Enable range requests for video seeking\n<IfModule mod_headers.c>\n    Header set Accept-Ranges bytes\n    Header set Cache-Control \"public, max-age=86400\"\n</IfModule>\n\n# Deny access by default\nOrder deny,allow\nDeny from all\n\n# Allow access to MP4 videos and poster images\n<FilesMatch \"\\.(mp4|jpg|jpeg|png|webp)$\">\n    Order allow,deny\n    Allow from all\n    Satisfy Any\n</FilesMatch>";
     file_put_contents($htaccess_path, $htaccess_content);
 
     // Create temp directory

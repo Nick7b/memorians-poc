@@ -1,11 +1,14 @@
-# Bypass WordPress rewrites for MP4 files
+# Bypass WordPress rewrites for media files
 <IfModule mod_rewrite.c>
     RewriteEngine Off
 </IfModule>
 
-# Set proper MIME type for MP4 videos
+# Set proper MIME types
 <IfModule mod_mime.c>
     AddType video/mp4 .mp4
+    AddType image/jpeg .jpg .jpeg
+    AddType image/png .png
+    AddType image/webp .webp
 </IfModule>
 
 # Enable range requests for video seeking
@@ -18,8 +21,8 @@
 Order deny,allow
 Deny from all
 
-# Allow access to MP4 videos only
-<FilesMatch "\.mp4$">
+# Allow access to MP4 videos and poster images
+<FilesMatch "\.(mp4|jpg|jpeg|png|webp)$">
     Order allow,deny
     Allow from all
     Satisfy Any

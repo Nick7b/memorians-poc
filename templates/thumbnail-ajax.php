@@ -33,12 +33,41 @@ try {
 
     // Convert relative path to absolute if needed
     if (!file_exists($media_path)) {
-        // Try to resolve path relative to plugin directory
-        $test_path = MEMORIANS_POC_PLUGIN_DIR . ltrim($media_path, '/');
-        if (file_exists($test_path)) {
-            $media_path = $test_path;
-        } else {
-            throw new Exception('Media file not found: ' . $media_path);
+        // Remove leading slash if present
+        $media_path = ltrim($media_path, '/');
+
+        // Try multiple path resolutions
+        $possible_paths = array(
+            MEMORIANS_POC_PLUGIN_DIR . $media_path,
+            ABSPATH . $media_path,
+            dirname(MEMORIANS_POC_PLUGIN_DIR, 3) . '/' . $media_path // Go up to WordPress root
+        );
+
+        $found = false;
+        foreach ($possible_paths as $test_path) {
+            if (file_exists($test_path)) {
+                $media_path = $test_path;
+                $found = true;
+                error_log('Found media file at: ' . $media_path);
+                break;
+            }
+        }
+
+        if (!$found) {
+            // For cache files, try direct cache directory
+            if (strpos($media_path, 'cache/') !== false) {
+                $filename = basename($media_path);
+                $cache_path = MEMORIANS_POC_CACHE_DIR . $filename;
+                if (file_exists($cache_path)) {
+                    $media_path = $cache_path;
+                    $found = true;
+                    error_log('Found cache file at: ' . $media_path);
+                }
+            }
+        }
+
+        if (!$found) {
+            throw new Exception('Media file not found. Tried paths: ' . implode(', ', $possible_paths));
         }
     }
 
