@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MEMORIANS_POC_VERSION', '1.4.4');
+define('MEMORIANS_POC_VERSION', '1.5.0');
 define('MEMORIANS_POC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MEMORIANS_POC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MEMORIANS_POC_MEDIA_DIR', MEMORIANS_POC_PLUGIN_DIR . 'media/');

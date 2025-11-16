@@ -105,6 +105,163 @@ $force_reload = time();
             </div>
         </div>
 
+        <!-- Settings Section -->
+        <div class="media-section">
+            <h3>Settings</h3>
+
+            <!-- Preset Configurations -->
+            <div class="settings-group">
+                <label class="settings-label">Preset Configuration</label>
+                <select id="preset-config" class="settings-select">
+                    <option value="custom">Custom</option>
+                    <option value="classic">Classic Memorial</option>
+                    <option value="cinematic">Cinematic</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="dynamic">Dynamic</option>
+                </select>
+                <p class="settings-description" id="preset-description">Customize all settings manually</p>
+            </div>
+
+            <!-- Basic Settings -->
+            <div class="settings-panel" id="basic-settings">
+                <!-- Media Scaling -->
+                <div class="settings-group">
+                    <label class="settings-label">Image Scale</label>
+                    <div class="slider-container">
+                        <input type="range" id="image-scale" class="settings-slider" min="0.1" max="2.0" step="0.1" value="1.0">
+                        <span class="slider-value" id="image-scale-value">1.0x</span>
+                    </div>
+                    <p class="settings-hint">Adjust image size (0.5 = half, 2.0 = double)</p>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Video Scale</label>
+                    <div class="slider-container">
+                        <input type="range" id="video-scale" class="settings-slider" min="0.1" max="2.0" step="0.1" value="1.0">
+                        <span class="slider-value" id="video-scale-value">1.0x</span>
+                    </div>
+                    <p class="settings-hint">Adjust video size (0.5 = half, 2.0 = double)</p>
+                </div>
+
+                <!-- Timing Controls -->
+                <div class="settings-group">
+                    <label class="settings-label">Image Duration</label>
+                    <div class="slider-container">
+                        <input type="range" id="image-duration" class="settings-slider" min="2" max="10" step="0.5" value="4">
+                        <span class="slider-value" id="image-duration-value">4s</span>
+                    </div>
+                    <p class="settings-hint">How long each image displays</p>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Transition Duration</label>
+                    <div class="slider-container">
+                        <input type="range" id="transition-duration" class="settings-slider" min="0.5" max="3" step="0.25" value="1">
+                        <span class="slider-value" id="transition-duration-value">1s</span>
+                    </div>
+                    <p class="settings-hint">Duration of transitions between media</p>
+                </div>
+            </div>
+
+            <!-- Advanced Settings Toggle -->
+            <div class="settings-toggle">
+                <button id="toggle-advanced" class="button button-secondary">
+                    <span class="toggle-text">Show Advanced Settings</span>
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </div>
+
+            <!-- Advanced Settings (Hidden by default) -->
+            <div class="settings-panel" id="advanced-settings" style="display: none;">
+                <!-- Visual Effects -->
+                <h4>Visual Effects</h4>
+
+                <div class="settings-group">
+                    <label class="settings-label">Ken Burns Effect Intensity</label>
+                    <div class="slider-container">
+                        <input type="range" id="ken-burns-intensity" class="settings-slider" min="0" max="2" step="0.1" value="1">
+                        <span class="slider-value" id="ken-burns-value">1.0x</span>
+                    </div>
+                    <p class="settings-hint">0 = disabled, 1 = normal, 2 = dramatic</p>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Background Blur</label>
+                    <div class="slider-container">
+                        <input type="range" id="background-blur" class="settings-slider" min="0" max="20" step="1" value="0">
+                        <span class="slider-value" id="background-blur-value">0px</span>
+                    </div>
+                    <p class="settings-hint">Blur effect for background image</p>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Media Shadow</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="media-shadow" class="settings-checkbox">
+                        <label for="media-shadow">Add drop shadow to media</label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Padding Color (when no background)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="padding-color" class="settings-color" value="#000000">
+                        <span class="color-value">#000000</span>
+                    </div>
+                </div>
+
+                <!-- Output Quality -->
+                <h4>Output Quality</h4>
+
+                <div class="settings-group">
+                    <label class="settings-label">Video Quality</label>
+                    <select id="video-quality" class="settings-select">
+                        <option value="low">Low (2 Mbps) - Smaller file</option>
+                        <option value="medium" selected>Medium (4 Mbps) - Balanced</option>
+                        <option value="high">High (8 Mbps) - Better quality</option>
+                        <option value="ultra">Ultra (12 Mbps) - Best quality</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Resolution</label>
+                    <select id="output-resolution" class="settings-select">
+                        <option value="720p">720p (720×1280)</option>
+                        <option value="1080p" selected>1080p (1080×1920)</option>
+                        <option value="original">Original (as source)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Frame Rate</label>
+                    <select id="frame-rate" class="settings-select">
+                        <option value="24">24 fps - Cinematic</option>
+                        <option value="30" selected>30 fps - Standard</option>
+                        <option value="60">60 fps - Smooth</option>
+                    </select>
+                </div>
+
+                <!-- Audio Settings -->
+                <h4>Audio</h4>
+
+                <div class="settings-group">
+                    <label class="settings-label">Music Volume</label>
+                    <div class="slider-container">
+                        <input type="range" id="music-volume" class="settings-slider" min="0" max="100" step="5" value="80">
+                        <span class="slider-value" id="music-volume-value">80%</span>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <label class="settings-label">Audio Fade</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="audio-fade" class="settings-checkbox" checked>
+                        <label for="audio-fade">Fade in/out at start/end</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Generate Button -->
         <div class="generate-button-container">
             <button id="start-generation" class="button button-primary button-large" disabled>

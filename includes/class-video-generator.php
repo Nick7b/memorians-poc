@@ -9,6 +9,7 @@ class Memorians_POC_Video_Generator {
     private $media_selector;
     private $cache_manager;
     private $temp_dir;
+    private $settings;
 
     public function __construct() {
         $this->media_selector = new Memorians_POC_Media_Selector();
@@ -31,7 +32,7 @@ class Memorians_POC_Video_Generator {
      * @param string $background_id Selected background image ID (optional)
      * @return array Result with video path or error
      */
-    public function generate_with_selection($template, $image_ids, $video_ids, $audio_id = null, $background_id = null) {
+    public function generate_with_selection($template, $image_ids, $video_ids, $audio_id = null, $background_id = null, $settings = array()) {
         // Check if FFmpeg is available
         if (!$this->check_ffmpeg()) {
             return array(
@@ -40,12 +41,35 @@ class Memorians_POC_Video_Generator {
             );
         }
 
-        // Create selection array for cache key
+        // Merge provided settings with defaults
+        $default_settings = array(
+            'imageScale' => 1.0,
+            'videoScale' => 1.0,
+            'imageDuration' => 4,
+            'transitionDuration' => 1,
+            'kenBurnsIntensity' => 1.0,
+            'backgroundBlur' => 0,
+            'mediaShadow' => false,
+            'paddingColor' => '#000000',
+            'videoQuality' => 'medium',
+            'outputResolution' => '1080p',
+            'frameRate' => 30,
+            'musicVolume' => 80,
+            'audioFade' => true
+        );
+
+        $settings = array_merge($default_settings, $settings);
+
+        // Store settings for use in generation
+        $this->settings = $settings;
+
+        // Create selection array for cache key (include settings for unique cache)
         $selection = array(
             'images' => $image_ids,
             'videos' => $video_ids,
             'audio' => $audio_id,
-            'background' => $background_id
+            'background' => $background_id,
+            'settings' => $settings
         );
 
         // Get cache key based on selection
@@ -276,43 +300,70 @@ class Memorians_POC_Video_Generator {
         // Calculate total video duration first
         $total_duration = 0;
         $sequence_count = count($media['sequence']);
+        $image_duration = isset($this->settings['imageDuration']) ? $this->settings['imageDuration'] : 4;
+        $transition_duration = isset($this->settings['transitionDuration']) ? $this->settings['transitionDuration'] : 1;
+
         foreach ($media['sequence'] as $item) {
-            $total_duration += ($item['duration'] ?? 4);
+            // Use settings for image duration
+            $total_duration += ($item['duration'] ?? $image_duration);
         }
-        // Subtract overlaps (1 second per transition)
-        $total_duration -= ($sequence_count - 1);
+        // Subtract overlaps based on transition duration setting
+        $total_duration -= ($sequence_count - 1) * $transition_duration;
 
         // Debug log
         error_log("Video generation: {$sequence_count} items, calculated duration: {$total_duration} seconds");
 
         // Process each item in sequence
         foreach ($media['sequence'] as $seq_index => $item) {
-            // Get the duration for this item (images have preset duration, videos we'll determine)
-            $clip_duration = $item['duration'] ?? 4;
+            // Get the duration for this item (use settings for default)
+            $clip_duration = $item['duration'] ?? $image_duration;
+
+            // Get settings
+            $frame_rate = isset($this->settings['frameRate']) ? $this->settings['frameRate'] : 30;
+            $image_scale = isset($this->settings['imageScale']) ? $this->settings['imageScale'] : 1.0;
+            $video_scale = isset($this->settings['videoScale']) ? $this->settings['videoScale'] : 1.0;
+
+            // Get resolution based on settings
+            $res_width = 1080;
+            $res_height = 1920;
+            if (isset($this->settings['outputResolution'])) {
+                switch ($this->settings['outputResolution']) {
+                    case '720p':
+                        $res_width = 720;
+                        $res_height = 1280;
+                        break;
+                    case '1080p':
+                        $res_width = 1080;
+                        $res_height = 1920;
+                        break;
+                }
+            }
 
             // Calculate exact frame count needed: duration × framerate
             // For xfade to work properly, each input must produce exact frame count
-            $frame_count = $clip_duration * 30; // 30fps standard
+            $frame_count = $clip_duration * $frame_rate;
 
             if ($item['type'] === 'image') {
-                // Add image input with loop, framerate set to 30fps, and exact duration
-                // Setting -framerate 30 ensures consistent timebase (1/30) for all inputs
-                $inputs[] = "-loop 1 -framerate 30 -t {$clip_duration} -i " . escapeshellarg($item['path']);
+                // Add image input with loop, framerate set based on settings, and exact duration
+                $inputs[] = "-loop 1 -framerate {$frame_rate} -t {$clip_duration} -i " . escapeshellarg($item['path']);
+
+                // Apply image scale to dimensions
+                $scaled_width = round($res_width * $image_scale);
+                $scaled_height = round($res_height * $image_scale);
 
                 // Apply Ken Burns effect with exact frame count matching the clip duration
-                // zoompan d parameter = number of frames this effect should generate
-                // settb=AVTB uses automatic video timebase for proper synchronization
-                // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
-                $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count);
+                // Scale Ken Burns intensity based on settings
+                $ken_burns_intensity = isset($this->settings['kenBurnsIntensity']) ? $this->settings['kenBurnsIntensity'] : 1.0;
+                $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count, $ken_burns_intensity);
 
                 // If we have a background, create transparent padding instead of black
                 if (!empty($media['bg_image'])) {
-                    // Scale image maintaining aspect ratio and add transparent padding
-                    // This ensures images stay the same size as without background
-                    $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x00000000,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
+                    // Scale image with scale factor applied, maintaining aspect ratio and add transparent padding
+                    $filter_complex[] = "[{$input_index}:v]fps={$frame_rate},scale={$scaled_width}:{$scaled_height}:force_original_aspect_ratio=decrease,pad={$res_width}:{$res_height}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
                 } else {
-                    // No background - use black padding as before
-                    $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                    // No background - use padding color from settings
+                    $padding_color = isset($this->settings['paddingColor']) ? str_replace('#', '0x', $this->settings['paddingColor']) : '0x000000';
+                    $filter_complex[] = "[{$input_index}:v]fps={$frame_rate},scale={$scaled_width}:{$scaled_height}:force_original_aspect_ratio=decrease,pad={$res_width}:{$res_height}:(ow-iw)/2:(oh-ih)/2:color={$padding_color},{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
                 }
 
                 $input_index++;
@@ -320,23 +371,25 @@ class Memorians_POC_Video_Generator {
                 // Add video input - no duration limiting at input stage
                 $inputs[] = "-i " . escapeshellarg($item['path']);
 
-                // For video clips: normalize to 30fps and extract exact frame count
-                // 1. fps=30 converts any source framerate to 30fps (duplicate/drop frames as needed)
+                // Apply video scale to dimensions
+                $scaled_width = round($res_width * $video_scale);
+                $scaled_height = round($res_height * $video_scale);
+
+                // For video clips: normalize to target fps and extract exact frame count
+                // 1. fps={$frame_rate} converts any source framerate (duplicate/drop frames as needed)
                 // 2. setpts=PTS-STARTPTS resets timestamps to start at 0
                 // 3. select='lt(n,{$frame_count})' selects EXACTLY the required frames
-                // 4. setpts=N/(30*TB) generates sequential timestamps (prevents frame timing issues)
+                // 4. setpts=N/({$frame_rate}*TB) generates sequential timestamps
                 // 5. All other filters normalize resolution and format for xfade compatibility
-                // This approach works for videos of ANY duration - we just take the first N frames
-                // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
 
                 // If we have a background, create transparent padding instead of black
                 if (!empty($media['bg_image'])) {
-                    // Scale video maintaining aspect ratio and add transparent padding
-                    // This ensures videos stay the same size as without background
-                    $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x00000000,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
+                    // Scale video with scale factor applied, maintaining aspect ratio and add transparent padding
+                    $filter_complex[] = "[{$input_index}:v]fps={$frame_rate},setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/({$frame_rate}*TB),scale={$scaled_width}:{$scaled_height}:force_original_aspect_ratio=decrease,pad={$res_width}:{$res_height}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
                 } else {
-                    // No background - use black padding as before
-                    $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                    // No background - use padding color from settings
+                    $padding_color = isset($this->settings['paddingColor']) ? str_replace('#', '0x', $this->settings['paddingColor']) : '0x000000';
+                    $filter_complex[] = "[{$input_index}:v]fps={$frame_rate},setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/({$frame_rate}*TB),scale={$scaled_width}:{$scaled_height}:force_original_aspect_ratio=decrease,pad={$res_width}:{$res_height}:(ow-iw)/2:(oh-ih)/2:color={$padding_color},settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
                 }
 
                 // Video audio is ignored - we only use background music

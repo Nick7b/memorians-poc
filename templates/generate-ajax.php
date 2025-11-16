@@ -78,10 +78,31 @@ try {
         $image_ids = array_map('sanitize_text_field', $image_ids);
         $video_ids = array_map('sanitize_text_field', $video_ids);
 
-        // DEBUG: Log background parameter
+        // Get settings array if provided
+        $settings = array();
+        if (isset($_GET['settings']) && is_array($_GET['settings'])) {
+            $settings = array(
+                'imageScale' => isset($_GET['settings']['imageScale']) ? floatval($_GET['settings']['imageScale']) : 1.0,
+                'videoScale' => isset($_GET['settings']['videoScale']) ? floatval($_GET['settings']['videoScale']) : 1.0,
+                'imageDuration' => isset($_GET['settings']['imageDuration']) ? floatval($_GET['settings']['imageDuration']) : 4,
+                'transitionDuration' => isset($_GET['settings']['transitionDuration']) ? floatval($_GET['settings']['transitionDuration']) : 1,
+                'kenBurnsIntensity' => isset($_GET['settings']['kenBurnsIntensity']) ? floatval($_GET['settings']['kenBurnsIntensity']) : 1.0,
+                'backgroundBlur' => isset($_GET['settings']['backgroundBlur']) ? intval($_GET['settings']['backgroundBlur']) : 0,
+                'mediaShadow' => isset($_GET['settings']['mediaShadow']) && $_GET['settings']['mediaShadow'] === '1',
+                'paddingColor' => isset($_GET['settings']['paddingColor']) ? sanitize_hex_color($_GET['settings']['paddingColor']) : '#000000',
+                'videoQuality' => isset($_GET['settings']['videoQuality']) ? sanitize_text_field($_GET['settings']['videoQuality']) : 'medium',
+                'outputResolution' => isset($_GET['settings']['outputResolution']) ? sanitize_text_field($_GET['settings']['outputResolution']) : '1080p',
+                'frameRate' => isset($_GET['settings']['frameRate']) ? intval($_GET['settings']['frameRate']) : 30,
+                'musicVolume' => isset($_GET['settings']['musicVolume']) ? intval($_GET['settings']['musicVolume']) : 80,
+                'audioFade' => isset($_GET['settings']['audioFade']) && $_GET['settings']['audioFade'] === '1'
+            );
+        }
+
+        // DEBUG: Log settings
+        error_log("generate-ajax.php: Received settings = " . json_encode($settings));
         error_log("generate-ajax.php: Received background_id = " . ($background_id ? $background_id : 'NULL'));
 
-        $result = $generator->generate_with_selection($template, $image_ids, $video_ids, $audio_id, $background_id);
+        $result = $generator->generate_with_selection($template, $image_ids, $video_ids, $audio_id, $background_id, $settings);
     } else {
         // This should not happen anymore, but keep as fallback
         $result = $generator->generate($template);

@@ -23,6 +23,79 @@
             background: { min: 0, max: 1 } // Optional
         },
 
+        // Settings configuration
+        settings: {
+            imageScale: 1.0,
+            videoScale: 1.0,
+            imageDuration: 4,
+            transitionDuration: 1,
+            kenBurnsIntensity: 1.0,
+            backgroundBlur: 0,
+            mediaShadow: false,
+            paddingColor: '#000000',
+            videoQuality: 'medium',
+            outputResolution: '1080p',
+            frameRate: 30,
+            musicVolume: 80,
+            audioFade: true
+        },
+
+        // Preset configurations
+        presets: {
+            classic: {
+                imageScale: 1.0,
+                videoScale: 1.0,
+                imageDuration: 4,
+                transitionDuration: 1,
+                kenBurnsIntensity: 1.0,
+                backgroundBlur: 0,
+                mediaShadow: false,
+                videoQuality: 'medium',
+                frameRate: 30,
+                musicVolume: 80,
+                audioFade: true
+            },
+            cinematic: {
+                imageScale: 0.8,
+                videoScale: 0.9,
+                imageDuration: 6,
+                transitionDuration: 2,
+                kenBurnsIntensity: 1.5,
+                backgroundBlur: 5,
+                mediaShadow: true,
+                videoQuality: 'high',
+                frameRate: 24,
+                musicVolume: 70,
+                audioFade: true
+            },
+            minimal: {
+                imageScale: 0.6,
+                videoScale: 0.6,
+                imageDuration: 3,
+                transitionDuration: 0.5,
+                kenBurnsIntensity: 0.5,
+                backgroundBlur: 0,
+                mediaShadow: false,
+                videoQuality: 'medium',
+                frameRate: 30,
+                musicVolume: 60,
+                audioFade: true
+            },
+            dynamic: {
+                imageScale: 1.2,
+                videoScale: 1.2,
+                imageDuration: 3,
+                transitionDuration: 1.5,
+                kenBurnsIntensity: 2.0,
+                backgroundBlur: 0,
+                mediaShadow: true,
+                videoQuality: 'high',
+                frameRate: 60,
+                musicVolume: 90,
+                audioFade: false
+            }
+        },
+
         // Gallery data
         videoGallery: [],
         currentVideo: null,
@@ -52,6 +125,7 @@
             console.log('Videos max:', this.requirements.videos.max);
 
             this.bindEvents();
+            this.initializeSettings();
             this.loadVideoGallery(); // Start by loading gallery
         },
 
@@ -123,6 +197,226 @@
                 $('#download-video').show();
                 $('#fullscreen-btn').show();
             });
+        },
+
+        initializeSettings: function() {
+            var self = this;
+
+            // Initialize slider values
+            $('.settings-slider').each(function() {
+                var $slider = $(this);
+                var $value = $('#' + $slider.attr('id') + '-value');
+                var value = $slider.val();
+
+                // Update display value
+                if ($slider.attr('id').indexOf('scale') > -1 || $slider.attr('id').indexOf('ken-burns') > -1) {
+                    $value.text(value + 'x');
+                } else if ($slider.attr('id').indexOf('duration') > -1) {
+                    $value.text(value + 's');
+                } else if ($slider.attr('id').indexOf('blur') > -1) {
+                    $value.text(value + 'px');
+                } else if ($slider.attr('id').indexOf('volume') > -1) {
+                    $value.text(value + '%');
+                }
+            });
+
+            // Slider change events
+            $('.settings-slider').on('input', function() {
+                var $slider = $(this);
+                var $value = $('#' + $slider.attr('id') + '-value');
+                var value = $slider.val();
+                var settingKey = $slider.attr('id').replace(/-/g, '');
+
+                // Update display value
+                if ($slider.attr('id').indexOf('scale') > -1 || $slider.attr('id').indexOf('ken-burns') > -1) {
+                    $value.text(value + 'x');
+                } else if ($slider.attr('id').indexOf('duration') > -1) {
+                    $value.text(value + 's');
+                } else if ($slider.attr('id').indexOf('blur') > -1) {
+                    $value.text(value + 'px');
+                } else if ($slider.attr('id').indexOf('volume') > -1) {
+                    $value.text(value + '%');
+                }
+
+                // Map HTML IDs to settings keys
+                var keyMap = {
+                    'imagescale': 'imageScale',
+                    'videoscale': 'videoScale',
+                    'imageduration': 'imageDuration',
+                    'transitionduration': 'transitionDuration',
+                    'kenburnsintensity': 'kenBurnsIntensity',
+                    'backgroundblur': 'backgroundBlur',
+                    'musicvolume': 'musicVolume'
+                };
+
+                // Update settings
+                if (keyMap[settingKey]) {
+                    self.settings[keyMap[settingKey]] = parseFloat(value);
+                }
+
+                // Mark preset as custom when any setting changes
+                $('#preset-config').val('custom');
+                $('#preset-description').text('Customize all settings manually');
+            });
+
+            // Checkbox change events
+            $('.settings-checkbox').on('change', function() {
+                var $checkbox = $(this);
+                var settingKey = $checkbox.attr('id').replace(/-/g, '');
+
+                // Map HTML IDs to settings keys
+                var keyMap = {
+                    'mediashadow': 'mediaShadow',
+                    'audiofade': 'audioFade'
+                };
+
+                if (keyMap[settingKey]) {
+                    self.settings[keyMap[settingKey]] = $checkbox.prop('checked');
+                }
+
+                // Mark preset as custom
+                $('#preset-config').val('custom');
+                $('#preset-description').text('Customize all settings manually');
+            });
+
+            // Select change events
+            $('.settings-select').not('#preset-config').on('change', function() {
+                var $select = $(this);
+                var settingKey = $select.attr('id').replace(/-/g, '');
+
+                // Map HTML IDs to settings keys
+                var keyMap = {
+                    'videoquality': 'videoQuality',
+                    'outputresolution': 'outputResolution',
+                    'framerate': 'frameRate'
+                };
+
+                if (keyMap[settingKey]) {
+                    var value = $select.val();
+                    // Frame rate needs to be numeric
+                    if (settingKey === 'framerate') {
+                        value = parseInt(value);
+                    }
+                    self.settings[keyMap[settingKey]] = value;
+                }
+
+                // Mark preset as custom
+                $('#preset-config').val('custom');
+                $('#preset-description').text('Customize all settings manually');
+            });
+
+            // Color picker change
+            $('#padding-color').on('change', function() {
+                var color = $(this).val();
+                $(this).next('.color-value').text(color);
+                self.settings.paddingColor = color;
+
+                // Mark preset as custom
+                $('#preset-config').val('custom');
+                $('#preset-description').text('Customize all settings manually');
+            });
+
+            // Advanced settings toggle
+            $('#toggle-advanced').on('click', function(e) {
+                e.preventDefault();
+                var $button = $(this);
+                var $advanced = $('#advanced-settings');
+
+                if ($advanced.is(':visible')) {
+                    $advanced.slideUp(300);
+                    $button.removeClass('active');
+                    $button.find('.toggle-text').text('Show Advanced Settings');
+                } else {
+                    $advanced.slideDown(300);
+                    $button.addClass('active');
+                    $button.find('.toggle-text').text('Hide Advanced Settings');
+                }
+            });
+
+            // Preset configuration change
+            $('#preset-config').on('change', function() {
+                var preset = $(this).val();
+
+                if (preset !== 'custom' && self.presets[preset]) {
+                    self.applyPreset(preset);
+                }
+
+                // Update description
+                var descriptions = {
+                    custom: 'Customize all settings manually',
+                    classic: 'Traditional memorial with balanced settings',
+                    cinematic: 'Film-like quality with slower pacing and blur effects',
+                    minimal: 'Clean and simple with smaller media and quick transitions',
+                    dynamic: 'High energy with larger media and dramatic effects'
+                };
+
+                $('#preset-description').text(descriptions[preset] || 'Customize all settings manually');
+            });
+
+            console.log('Settings initialized');
+        },
+
+        applyPreset: function(presetName) {
+            var self = this;
+            var preset = this.presets[presetName];
+
+            if (!preset) return;
+
+            // Apply all preset values
+            for (var key in preset) {
+                if (preset.hasOwnProperty(key)) {
+                    this.settings[key] = preset[key];
+
+                    // Update UI elements
+                    switch(key) {
+                        case 'imageScale':
+                            $('#image-scale').val(preset[key]);
+                            $('#image-scale-value').text(preset[key] + 'x');
+                            break;
+                        case 'videoScale':
+                            $('#video-scale').val(preset[key]);
+                            $('#video-scale-value').text(preset[key] + 'x');
+                            break;
+                        case 'imageDuration':
+                            $('#image-duration').val(preset[key]);
+                            $('#image-duration-value').text(preset[key] + 's');
+                            break;
+                        case 'transitionDuration':
+                            $('#transition-duration').val(preset[key]);
+                            $('#transition-duration-value').text(preset[key] + 's');
+                            break;
+                        case 'kenBurnsIntensity':
+                            $('#ken-burns-intensity').val(preset[key]);
+                            $('#ken-burns-value').text(preset[key] + 'x');
+                            break;
+                        case 'backgroundBlur':
+                            $('#background-blur').val(preset[key]);
+                            $('#background-blur-value').text(preset[key] + 'px');
+                            break;
+                        case 'mediaShadow':
+                            $('#media-shadow').prop('checked', preset[key]);
+                            break;
+                        case 'videoQuality':
+                            $('#video-quality').val(preset[key]);
+                            break;
+                        case 'outputResolution':
+                            $('#output-resolution').val(preset[key]);
+                            break;
+                        case 'frameRate':
+                            $('#frame-rate').val(preset[key]);
+                            break;
+                        case 'musicVolume':
+                            $('#music-volume').val(preset[key]);
+                            $('#music-volume-value').text(preset[key] + '%');
+                            break;
+                        case 'audioFade':
+                            $('#audio-fade').prop('checked', preset[key]);
+                            break;
+                    }
+                }
+            }
+
+            console.log('Applied preset:', presetName, preset);
         },
 
         checkForCachedVideo: function() {
@@ -662,6 +956,23 @@
             $.each(this.selectedVideos, function(index, videoId) {
                 params['videos[' + index + ']'] = videoId;
             });
+
+            // Add all settings to params
+            params['settings[imageScale]'] = this.settings.imageScale;
+            params['settings[videoScale]'] = this.settings.videoScale;
+            params['settings[imageDuration]'] = this.settings.imageDuration;
+            params['settings[transitionDuration]'] = this.settings.transitionDuration;
+            params['settings[kenBurnsIntensity]'] = this.settings.kenBurnsIntensity;
+            params['settings[backgroundBlur]'] = this.settings.backgroundBlur;
+            params['settings[mediaShadow]'] = this.settings.mediaShadow ? '1' : '0';
+            params['settings[paddingColor]'] = this.settings.paddingColor;
+            params['settings[videoQuality]'] = this.settings.videoQuality;
+            params['settings[outputResolution]'] = this.settings.outputResolution;
+            params['settings[frameRate]'] = this.settings.frameRate;
+            params['settings[musicVolume]'] = this.settings.musicVolume;
+            params['settings[audioFade]'] = this.settings.audioFade ? '1' : '0';
+
+            console.log('Sending settings:', this.settings);
 
             $.ajax({
                 url: memoriansPoC.generateUrl,
