@@ -1,13 +1,25 @@
-<!DOCTYPE html>
+<?php
+// Force no caching for this page
+header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+
+// Force reload timestamp
+$force_reload = time();
+?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Memorial Video - Memorians POC</title>
 
-    <!-- Load only necessary scripts -->
+    <!-- Load only necessary scripts with aggressive cache busting -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="<?php echo MEMORIANS_POC_PLUGIN_URL; ?>assets/css/video-page.css?ver=<?php echo MEMORIANS_POC_VERSION; ?>">
+    <link rel="stylesheet" href="<?php echo MEMORIANS_POC_PLUGIN_URL; ?>assets/css/video-page.css?ver=<?php echo MEMORIANS_POC_VERSION; ?>&t=<?php echo $force_reload; ?>">
 </head>
 <body class="memorians-poc-page">
 
@@ -163,8 +175,16 @@ memoriansPoC.generateUrl = '<?php echo home_url('/ffmpeg-poc/generate/'); ?>';
 memoriansPoC.progressUrl = '<?php echo home_url('/ffmpeg-poc/progress/'); ?>';
 memoriansPoC.mediaLibraryUrl = '<?php echo home_url('/ffmpeg-poc/media-library/'); ?>';
 memoriansPoC.videoHistoryUrl = '<?php echo home_url('/ffmpeg-poc/video-history/'); ?>';
+
+// Debug information
+console.log('=== MEMORIANS POC DEBUG INFO ===');
+console.log('Plugin Version: <?php echo MEMORIANS_POC_VERSION; ?>');
+console.log('Page Load Time: <?php echo date('Y-m-d H:i:s'); ?>');
+console.log('Unique Load ID: <?php echo uniqid(); ?>');
+console.log('Cache Buster: <?php echo $force_reload; ?>');
+console.log('=================================');
 </script>
 
-<script src="<?php echo MEMORIANS_POC_PLUGIN_URL; ?>assets/js/video-player.js?ver=<?php echo MEMORIANS_POC_VERSION; ?>"></script>
+<script src="<?php echo MEMORIANS_POC_PLUGIN_URL; ?>assets/js/video-player.js?ver=<?php echo MEMORIANS_POC_VERSION; ?>&t=<?php echo $force_reload; ?>&nocache=<?php echo uniqid(); ?>"></script>
 </body>
 </html>

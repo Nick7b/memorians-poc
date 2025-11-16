@@ -323,6 +323,21 @@ class Memorians_POC_Video_Generator {
             }
         }
 
+        // Add background image input if provided
+        $bg_input_index = null;
+        if (!empty($media['bg_image']) && file_exists($media['bg_image'])) {
+            $bg_input_index = $input_index;
+            // Loop the background image for the entire duration, set framerate to 30fps
+            $inputs[] = "-loop 1 -framerate 30 -t {$total_duration} -i " . escapeshellarg($media['bg_image']);
+            $input_index++;
+
+            // Scale and prepare background to match output dimensions
+            // Scale to fit 1080x1920, then ensure it fills the frame
+            $filter_complex[] = "[{$bg_input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,format=yuv420p[bg]";
+
+            error_log("Background image added: " . basename($media['bg_image']));
+        }
+
         // Add background audio input - limit to video duration
         if ($media['audio']) {
             $audio_input_index = $input_index;
@@ -339,7 +354,8 @@ class Memorians_POC_Video_Generator {
 
         for ($i = 1; $i < count($media['sequence']); $i++) {
             $transition = $this->media_selector->get_transition($template);
-            $next_label = ($i < count($media['sequence']) - 1) ? "vt{$i}" : "vout";
+            // If this is the last transition and we have a background, output to a temp label for compositing
+            $next_label = ($i < count($media['sequence']) - 1) ? "vt{$i}" : ($bg_input_index !== null ? "vfg" : "vout");
 
             // Offset is when the transition starts in the accumulated timeline
             // We want it to start {transition_duration} seconds before the current offset
@@ -350,6 +366,23 @@ class Memorians_POC_Video_Generator {
             // Add next clip duration but subtract transition overlap
             // This is critical: each transition consumes time from both clips
             $offset += ($media['sequence'][$i]['duration'] ?? 4) - $transition_duration;
+        }
+
+        // Handle single item case or add background overlay
+        if (count($media['sequence']) === 1) {
+            // Only one item, no xfade transitions needed
+            if ($bg_input_index !== null) {
+                // Composite single item over background
+                $filter_complex[] = "[bg][v0]overlay=0:0[vout]";
+                error_log("Background overlay filter added (single item)");
+            } else {
+                // No background, just rename to vout
+                $filter_complex[] = "[v0]copy[vout]";
+            }
+        } else if ($bg_input_index !== null) {
+            // Multiple items with background - composite the final xfade output over background
+            $filter_complex[] = "[bg][vfg]overlay=0:0[vout]";
+            error_log("Background overlay filter added (multiple items)");
         }
 
         // Handle audio (background music only, video audio is muted)
