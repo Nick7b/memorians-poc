@@ -1,130 +1,0 @@
-ffmpeg version 5.1.7 Copyright (c) 2000-2025 the FFmpeg developers
-  built with gcc 11 (GCC)
-  configuration: --prefix=/usr --bindir=/usr/bin --datadir=/usr/share/ffmpeg --docdir=/usr/share/doc/ffmpeg --incdir=/usr/include/ffmpeg --libdir=/usr/lib64 --mandir=/usr/share/man --arch=x86_64 --optflags='-O2 -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=x86-64-v2 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection' --extra-ldflags='-Wl,-z,relro -Wl,--as-needed -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 ' --extra-cflags=' -I/usr/include/rav1e' --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libvo-amrwbenc --enable-version3 --enable-bzlib --disable-crystalhd --enable-fontconfig --enable-frei0r --enable-gcrypt --enable-gnutls --enable-ladspa --enable-libaom --enable-libdav1d --enable-libass --enable-libbluray --enable-libcdio --enable-libdrm --enable-libjack --enable-libjxl --enable-libfreetype --enable-libfribidi --enable-libgsm --enable-libmp3lame --enable-libmysofa --enable-nvenc --enable-openal --enable-opencl --enable-opengl --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librsvg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libvorbis --enable-libv4l2 --enable-libvidstab --enable-libvmaf --enable-version3 --enable-vapoursynth --enable-libvpx --enable-vulkan --enable-libshaderc --enable-libx264 --enable-libx265 --enable-libxvid --enable-libxml2 --enable-libzimg --enable-libzvbi --enable-lv2 --enable-avfilter --enable-libmodplug --enable-postproc --enable-pthreads --disable-static --enable-shared --enable-gpl --disable-debug --disable-stripping --shlibdir=/usr/lib64 --enable-lto --enable-libmfx --enable-runtime-cpudetect
-  libavutil      57. 28.100 / 57. 28.100
-  libavcodec     59. 37.100 / 59. 37.100
-  libavformat    59. 27.100 / 59. 27.100
-  libavdevice    59.  7.100 / 59.  7.100
-  libavfilter     8. 44.100 /  8. 44.100
-  libswscale      6.  7.100 /  6.  7.100
-  libswresample   4.  7.100 /  4.  7.100
-  libpostproc    56.  6.100 / 56.  6.100
-ffmpeg stats and -progress period set to 0.5.
-Input #0, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/1.png':
-  Duration: N/A, bitrate: N/A
-  Stream #0:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #1, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/10.png':
-  Duration: N/A, bitrate: N/A
-  Stream #1:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #2, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/12.png':
-  Duration: N/A, bitrate: N/A
-  Stream #2:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #3, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/11.png':
-  Duration: N/A, bitrate: N/A
-  Stream #3:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #4, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/13.png':
-  Duration: N/A, bitrate: N/A
-  Stream #4:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #5, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/14.png':
-  Duration: N/A, bitrate: N/A
-  Stream #5:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #6, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/16.png':
-  Duration: N/A, bitrate: N/A
-  Stream #6:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #7, mov,mp4,m4a,3gp,3g2,mj2, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/videos/1.mp4':
-  Metadata:
-    major_brand     : isom
-    minor_version   : 512
-    compatible_brands: isomiso2avc1mp41
-    encoder         : Google
-  Duration: 00:00:08.04, start: 0.000000, bitrate: 1873 kb/s
-  Stream #7:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 1280x720, 1728 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
-    Metadata:
-      handler_name    : VideoHandler
-      vendor_id       : [0][0][0][0]
-  Stream #7:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 140 kb/s (default)
-    Metadata:
-      handler_name    : SoundHandler
-      vendor_id       : [0][0][0][0]
-Input #8, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/15.png':
-  Duration: N/A, bitrate: N/A
-  Stream #8:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #9, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/17.png':
-  Duration: N/A, bitrate: N/A
-  Stream #9:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #10, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/18.png':
-  Duration: N/A, bitrate: N/A
-  Stream #10:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #11, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/2.png':
-  Duration: N/A, bitrate: N/A
-  Stream #11:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #12, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/19.png':
-  Duration: N/A, bitrate: N/A
-  Stream #12:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #13, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/20.png':
-  Duration: N/A, bitrate: N/A
-  Stream #13:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #14, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/21.png':
-  Duration: N/A, bitrate: N/A
-  Stream #14:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #15, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/images/23.png':
-  Duration: N/A, bitrate: N/A
-  Stream #15:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-Input #16, png_pipe, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/bg_images/4.png':
-  Duration: N/A, bitrate: N/A
-  Stream #16:0: Video: png, rgb24(pc), 1024x1024, 30 fps, 30 tbr, 30 tbn
-[mp3 @ 0x5581cf32f780] Estimating duration from bitrate, this may be inaccurate
-Input #17, mp3, from '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/media/audio/1.mp3':
-  Duration: 00:03:23.83, start: 0.000000, bitrate: 255 kb/s
-  Stream #17:0: Audio: mp3, 44100 Hz, stereo, fltp, 256 kb/s
-Stream mapping:
-  Stream #0:0 (png) -> fps:default
-  Stream #1:0 (png) -> fps:default
-  Stream #2:0 (png) -> fps:default
-  Stream #3:0 (png) -> fps:default
-  Stream #4:0 (png) -> fps:default
-  Stream #5:0 (png) -> fps:default
-  Stream #6:0 (png) -> fps:default
-  Stream #7:0 (h264) -> fps:default
-  Stream #8:0 (png) -> fps:default
-  Stream #9:0 (png) -> fps:default
-  Stream #10:0 (png) -> fps:default
-  Stream #11:0 (png) -> fps:default
-  Stream #12:0 (png) -> fps:default
-  Stream #13:0 (png) -> fps:default
-  Stream #14:0 (png) -> fps:default
-  Stream #15:0 (png) -> fps:default
-  Stream #16:0 (png) -> fps:default
-  Stream #17:0 (mp3float) -> volume:default
-  overlay:default -> Stream #0:0 (libx264)
-  afade:default -> Stream #0:1 (aac)
-Press [q] to stop, [?] for help
-[libx264 @ 0x5581cd5cc480] using SAR=1/1
-[libx264 @ 0x5581cd5cc480] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2
-[libx264 @ 0x5581cd5cc480] profile Constrained Baseline, level 4.0, 4:2:0, 8-bit
-[libx264 @ 0x5581cd5cc480] 264 - core 163 r3060 5db6aa6 - H.264/MPEG-4 AVC codec - Copyleft 2003-2021 - http://www.videolan.org/x264.html - options: cabac=0 ref=3 deblock=1:0:0 analyse=0x1:0x111 me=hex subme=7 psy=1 psy_rd=1.00:0.00 mixed_ref=1 me_range=16 chroma_me=1 trellis=1 8x8dct=0 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=-2 threads=12 lookahead_threads=2 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=0 weightp=0 keyint=60 keyint_min=6 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=1:1.00
-Output #0, mp4, to '/var/www/vhosts/memorians.nl/httpdocs/memorians.nl/wp-content/plugins/memorians-poc/cache/memorial_video_classic_0b4404b4d2d0.mp4':
-  Metadata:
-    encoder         : Lavf59.27.100
-  Stream #0:0: Video: h264 (avc1 / 0x31637661), yuv420p(tv, progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 30 fps, 15360 tbn
-    Metadata:
-      encoder         : Lavc59.37.100 libx264
-    Side data:
-      cpb: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-  Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 192 kb/s
-    Metadata:
-      encoder         : Lavc59.37.100 aac
-frame=    1 fps=0.0 q=0.0 size=       0kB time=00:00:00.00 bitrate=N/A speed=   0x    frame=   39 fps= 27 q=0.0 size=       0kB time=00:00:01.25 bitrate=   0.3kbits/s speed=0.87x    frame=   63 fps= 32 q=29.0 size=       0kB time=00:00:02.06 bitrate=   0.2kbits/s speed=1.06x    frame=   92 fps= 37 q=29.0 size=     256kB time=00:00:02.98 bitrate= 702.3kbits/s speed=1.19x    frame=  110 fps= 36 q=29.0 size=     256kB time=00:00:03.58 bitrate= 585.2kbits/s speed=1.19x    frame=  131 fps= 37 q=29.0 size=     512kB time=00:00:04.30 bitrate= 973.4kbits/s speed=1.22x    frame=  158 fps= 39 q=29.0 size=    1024kB time=00:00:05.22 bitrate=1605.0kbits/s speed= 1.3x    frame=  181 fps= 40 q=29.0 size=    1536kB time=00:00:05.97 bitrate=2106.6kbits/s speed= 1.3x    frame=  199 fps= 39 q=29.0 size=    1536kB time=00:00:06.59 bitrate=1908.9kbits/s speed= 1.3x    frame=  221 fps= 40 q=29.0 size=    1792kB time=00:00:07.29 bitrate=2012.1kbits/s speed=1.31x    frame=  248 fps= 41 q=29.0 size=    2304kB time=00:00:08.23 bitrate=2292.1kbits/s speed=1.35x    frame=  271 fps= 41 q=29.0 size=    2560kB time=00:00:08.98 bitrate=2335.1kbits/s speed=1.36x    frame=  289 fps= 41 q=29.0 size=    2816kB time=00:00:09.57 bitrate=2408.4kbits/s speed=1.34x    frame=  312 fps= 41 q=29.0 size=    3072kB time=00:00:10.34 bitrate=2432.3kbits/s speed=1.36x    frame=  338 fps= 41 q=29.0 size=    3328kB time=00:00:11.20 bitrate=2434.2kbits/s speed=1.37x    frame=  360 fps= 42 q=29.0 size=    4096kB time=00:00:11.94 bitrate=2808.7kbits/s speed=1.38x    frame=  376 fps= 41 q=29.0 size=    4096kB time=00:00:12.48 bitrate=2688.7kbits/s speed=1.36x    frame=  396 fps= 41 q=29.0 size=    4352kB time=00:00:13.12 bitrate=2717.4kbits/s speed=1.35x    frame=  423 fps= 41 q=29.0 size=    4608kB time=00:00:14.05 bitrate=2685.1kbits/s speed=1.38x    frame=  446 fps= 42 q=29.0 size=    5376kB time=00:00:14.78 bitrate=2978.9kbits/s speed=1.38x    frame=  463 fps= 41 q=26.0 size=    5376kB time=00:00:15.38 bitrate=2863.2kbits/s speed=1.37x    frame=  482 fps= 41 q=29.0 size=    5632kB time=00:00:16.02 bitrate=2879.8kbits/s speed=1.37x    frame=  512 fps= 42 q=29.0 size=    5632kB time=00:00:17.00 bitrate=2713.6kbits/s speed=1.39x    frame=  536 fps= 42 q=29.0 size=    6400kB time=00:00:17.81 bitrate=2943.3kbits/s speed= 1.4x    frame=  553 fps= 42 q=29.0 size=    6400kB time=00:00:18.36 bitrate=2854.4kbits/s speed=1.38x    frame=  570 fps= 41 q=29.0 size=    6656kB time=00:00:18.96 bitrate=2875.1kbits/s speed=1.37x    frame=  596 fps= 42 q=29.0 size=    7168kB time=00:00:19.81 bitrate=2962.9kbits/s speed=1.38x    frame=  608 fps= 41 q=29.0 size=    9984kB time=00:00:20.22 bitrate=4044.2kbits/s speed=1.36x    frame=  621 fps= 40 q=29.0 size=   13056kB time=00:00:20.67 bitrate=5173.9kbits/s speed=1.35x    frame=  640 fps= 40 q=29.0 size=   13824kB time=00:00:21.26 bitrate=5324.4kbits/s speed=1.34x    frame=  655 fps= 40 q=29.0 size=   14080kB time=00:00:21.76 bitrate=5300.7kbits/s speed=1.33x    frame=  677 fps= 40 q=29.0 size=   14336kB time=00:00:22.48 bitrate=5223.0kbits/s speed=1.33x    frame=  694 fps= 40 q=29.0 size=   16640kB time=00:00:23.08 bitrate=5905.5kbits/s speed=1.33x    frame=  707 fps= 39 q=29.0 size=   19200kB time=00:00:23.50 bitrate=6690.4kbits/s speed=1.31x    frame=  733 fps= 40 q=29.0 size=   20736kB time=00:00:24.40 bitrate=6960.4kbits/s speed=1.32x    frame=  763 fps= 40 q=29.0 size=   20992kB time=00:00:25.38 bitrate=6773.9kbits/s speed=1.34x    frame=  797 fps= 41 q=29.0 size=   20992kB time=00:00:26.51 bitrate=6485.1kbits/s speed=1.36x    frame=  835 fps= 42 q=29.0 size=   21248kB time=00:00:27.79 bitrate=6261.9kbits/s speed=1.39x    frame=  858 fps= 42 q=29.0 size=   21248kB time=00:00:28.54 bitrate=6098.1kbits/s speed=1.39x    frame=  885 fps= 42 q=29.0 size=   21504kB time=00:00:29.44 bitrate=5983.7kbits/s speed= 1.4x    frame=  915 fps= 42 q=29.0 size=   22016kB time=00:00:30.46 bitrate=5920.3kbits/s speed=1.41x    frame=  941 fps= 43 q=26.0 size=   22272kB time=00:00:31.31 bitrate=5825.9kbits/s speed=1.42x    frame=  958 fps= 42 q=29.0 size=   22528kB time=00:00:31.87 bitrate=5790.3kbits/s speed=1.41x    frame=  987 fps= 43 q=29.0 size=   23296kB time=00:00:32.83 bitrate=5812.7kbits/s speed=1.42x    frame= 1003 fps= 43 q=29.0 size=   26112kB time=00:00:33.38 bitrate=6407.0kbits/s speed=1.42x    frame= 1026 fps= 43 q=29.0 size=   28416kB time=00:00:34.13 bitrate=6819.9kbits/s speed=1.42x    frame= 1042 fps= 42 q=29.0 size=   28672kB time=00:00:34.68 bitrate=6771.3kbits/s speed=1.41x    frame= 1064 fps= 42 q=29.0 size=   28672kB time=00:00:35.41 bitrate=6632.6kbits/s speed=1.41x    frame= 1088 fps= 42 q=29.0 size=   30976kB time=00:00:36.20 bitrate=7009.3kbits/s speed=1.41x    frame= 1113 fps= 43 q=29.0 size=   33536kB time=00:00:37.01 bitrate=7422.4kbits/s speed=1.42x    frame= 1129 fps= 42 q=29.0 size=   33792kB time=00:00:37.54 bitrate=7372.8kbits/s speed=1.41x    frame= 1147 fps= 42 q=29.0 size=   33792kB time=00:00:38.16 bitrate=7253.3kbits/s speed=1.41x    frame= 1174 fps= 42 q=29.0 size=   35072kB time=00:00:39.08 bitrate=7351.3kbits/s speed=1.41x    frame= 1198 fps= 43 q=29.0 size=   38656kB time=00:00:39.89 bitrate=7937.9kbits/s speed=1.42x    frame= 1216 fps= 42 q=29.0 size=   38656kB time=00:00:40.49 bitrate=7820.8kbits/s speed=1.41x    frame= 1233 fps= 42 q=29.0 size=   38912kB time=00:00:41.06 bitrate=7762.2kbits/s speed=1.41x    frame= 1263 fps= 43 q=29.0 size=   40192kB time=00:00:42.04 bitrate=7830.4kbits/s speed=1.42x    frame= 1283 fps= 42 q=29.0 size=   43008kB time=00:00:42.73 bitrate=8245.2kbits/s speed=1.41x    frame= 1305 fps= 42 q=29.0 size=   43520kB time=00:00:43.43 bitrate=8208.1kbits/s speed=1.41x    frame= 1325 fps= 42 q=29.0 size=   43776kB time=00:00:44.11 bitrate=8128.6kbits/s speed=1.41x    frame= 1356 fps= 43 q=29.0 size=   44032kB time=00:00:45.14 bitrate=7990.7kbits/s speed=1.42x    frame= 1384 fps= 43 q=29.0 size=   44800kB time=00:00:46.08 bitrate=7964.5kbits/s speed=1.43x    frame= 1404 fps= 43 q=29.0 size=   45056kB time=00:00:46.76 bitrate=7893.0kbits/s speed=1.43x    frame= 1433 fps= 43 q=29.0 size=   45312kB time=00:00:47.68 bitrate=7785.2kbits/s speed=1.43x    frame= 1461 fps= 43 q=29.0 size=   45824kB time=00:00:48.61 bitrate=7721.1kbits/s speed=1.44x    frame= 1481 fps= 43 q=29.0 size=   46080kB time=00:00:49.32 bitrate=7653.4kbits/s speed=1.44x    frame= 1497 fps= 43 q=29.0 size=   46080kB time=00:00:49.83 bitrate=7574.8kbits/s speed=1.43x    frame= 1527 fps= 43 q=29.0 size=   46848kB time=00:00:50.81 bitrate=7552.3kbits/s speed=1.44x    frame= 1548 fps= 43 q=29.0 size=   50432kB time=00:00:51.52 bitrate=8019.0kbits/s speed=1.44x    frame= 1580 fps= 43 q=29.0 size=   51712kB time=00:00:52.60 bitrate=8052.5kbits/s speed=1.45x    [mp4 @ 0x5581ccc76500] Starting second pass: moving the moov atom to the beginning of the file
-frame= 1591 fps= 43 q=-1.0 Lsize=   52242kB time=00:00:53.05 bitrate=8066.3kbits/s speed=1.44x    
-video:50914kB audio:1282kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.088446%
-[libx264 @ 0x5581cd5cc480] frame I:30    Avg QP:17.53  size:164236
-[libx264 @ 0x5581cd5cc480] frame P:1561  Avg QP:20.69  size: 30242
-[libx264 @ 0x5581cd5cc480] mb I  I16..4: 57.1%  0.0% 42.9%
-[libx264 @ 0x5581cd5cc480] mb P  I16..4:  1.4%  0.0%  1.0%  P16..4: 21.1%  3.5%  1.7%  0.0%  0.0%    skip:71.3%
-[libx264 @ 0x5581cd5cc480] coded y,uvDC,uvAC intra: 46.4% 42.9% 15.3% inter: 8.5% 9.8% 0.3%
-[libx264 @ 0x5581cd5cc480] i16 v,h,dc,p: 52% 21% 12% 15%
-[libx264 @ 0x5581cd5cc480] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 22% 22% 18%  7%  7%  6%  7%  5%  6%
-[libx264 @ 0x5581cd5cc480] i8c dc,h,v,p: 63% 19% 14%  4%
-[libx264 @ 0x5581cd5cc480] ref P L0: 76.6% 12.6% 10.7%
-[libx264 @ 0x5581cd5cc480] kb/s:7864.56
-[aac @ 0x5581ccc94240] Qavg: 1101.311

@@ -74,16 +74,16 @@ class Memorians_POC_Media_Selector {
      * @param string $template Template style
      * @return array Sequence array
      */
-    private function create_sequence($images, $videos, $template) {
+    private function create_sequence($images, $videos, $template, $image_duration = 4) {
         $sequence = array();
 
-        // Add images to sequence
+        // Add images to sequence (using duration from settings)
         foreach ($images as $index => $image) {
             $sequence[] = array(
                 'type' => 'image',
                 'path' => $image,
                 'index' => $index,
-                'duration' => 4 // 4 seconds per image
+                'duration' => $image_duration // Use duration from settings
             );
         }
 
@@ -279,7 +279,7 @@ class Memorians_POC_Media_Selector {
      * @param string $template Template style
      * @return array|WP_Error Array of selected media or error
      */
-    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id = null, $template = 'classic') {
+    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id = null, $template = 'classic', $image_duration = 4) {
         // Validate image count (min 15, max 40)
         $image_count = count($image_ids);
         if ($image_count < 15 || $image_count > 40) {
@@ -346,8 +346,8 @@ class Memorians_POC_Media_Selector {
             $selected_background = $valid_background_ids[$background_id];
         }
 
-        // Create compilation sequence
-        $sequence = $this->create_sequence($selected_images, $selected_videos, $template);
+        // Create compilation sequence (pass image duration)
+        $sequence = $this->create_sequence($selected_images, $selected_videos, $template, $image_duration);
 
         return array(
             'images' => $selected_images,
@@ -364,37 +364,51 @@ class Memorians_POC_Media_Selector {
      *
      * @param int $index Image index
      * @param string $template Template style
+     * @param int $frame_count Number of frames
+     * @param float $intensity Zoom intensity multiplier (1.0 = normal)
+     * @param int $frame_rate Frame rate (default 30)
      * @return string FFmpeg zoompan filter string
      */
-    public function get_ken_burns_effect($index, $template = 'classic', $frame_count = 120) {
+    public function get_ken_burns_effect($index, $template = 'classic', $frame_count = 120, $intensity = 1.0, $frame_rate = 30) {
         // Frame count is passed from video generator based on clip duration
-        // Default is 120 frames (4 seconds at 30fps) for backward compatibility
-        // IMPORTANT: fps=30 parameter ensures zoompan outputs at exactly 30fps
+        // Frame rate is now dynamic based on settings
         // Mobile-optimized: 1080x1920 portrait resolution for full-screen mobile viewing
+
+        // Apply intensity scaling to zoom speeds and max zoom values
+        $zoom_speed_1 = 0.0015 * $intensity;
+        $zoom_speed_2 = 0.001 * $intensity;
+        $zoom_speed_3 = 0.002 * $intensity;
+        $zoom_speed_4 = 0.0012 * $intensity;
+
+        $max_zoom_1 = 1.0 + (0.3 * $intensity);  // 1.3 at intensity 1.0
+        $max_zoom_2 = 1.0 + (0.2 * $intensity);  // 1.2 at intensity 1.0
+        $max_zoom_3 = 1.0 + (0.4 * $intensity);  // 1.4 at intensity 1.0
+        $max_zoom_4 = 1.0 + (0.25 * $intensity); // 1.25 at intensity 1.0
+
         $patterns = array(
             // Zoom in slowly from center
-            "zoompan=z='min(zoom+0.0015,1.3)':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_1},{$max_zoom_1})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Zoom out from close
-            "zoompan=z='if(lte(zoom,1.0),1.3,max(1.0,zoom-0.0015))':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='if(lte(zoom,1.0),{$max_zoom_1},max(1.0,zoom-{$zoom_speed_1}))':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Pan left with slight zoom
-            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)-((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_2},{$max_zoom_2})':x='iw/2-(iw/zoom/2)-((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Pan right with slight zoom
-            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_2},{$max_zoom_2})':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Zoom to center from top-left
-            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)-(iw/10)+(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)-(ih/10)+(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_3},{$max_zoom_3})':x='iw/2-(iw/zoom/2)-(iw/10)+(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)-(ih/10)+(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Zoom to center from bottom-right
-            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)+(iw/10)-(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)+(ih/10)-(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_3},{$max_zoom_3})':x='iw/2-(iw/zoom/2)+(iw/10)-(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)+(ih/10)-(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Slow zoom with vertical pan up
-            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)-((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
+            "zoompan=z='min(zoom+{$zoom_speed_4},{$max_zoom_4})':y='ih/2-(ih/zoom/2)-((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}",
 
             // Slow zoom with vertical pan down
-            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30"
+            "zoompan=z='min(zoom+{$zoom_speed_4},{$max_zoom_4})':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}"
         );
 
         // Select pattern based on index (cycling through patterns)

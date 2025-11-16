@@ -85,8 +85,9 @@ class Memorians_POC_Video_Generator {
             );
         }
 
-        // Select media by IDs
-        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id, $template);
+        // Select media by IDs (pass image duration from settings)
+        $image_duration = isset($this->settings['imageDuration']) ? $this->settings['imageDuration'] : 4;
+        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id, $template, $image_duration);
         if (is_wp_error($media)) {
             return array(
                 'success' => false,
@@ -354,7 +355,7 @@ class Memorians_POC_Video_Generator {
                 // Apply Ken Burns effect with exact frame count matching the clip duration
                 // Scale Ken Burns intensity based on settings
                 $ken_burns_intensity = isset($this->settings['kenBurnsIntensity']) ? $this->settings['kenBurnsIntensity'] : 1.0;
-                $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count, $ken_burns_intensity);
+                $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count, $ken_burns_intensity, $frame_rate);
 
                 // If we have a background, create transparent padding instead of black
                 if (!empty($media['bg_image'])) {
