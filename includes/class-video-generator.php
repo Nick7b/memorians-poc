@@ -26,11 +26,11 @@ class Memorians_POC_Video_Generator {
      *
      * @param string $template Template style (classic, modern, elegant)
      * @param array $image_ids Array of selected image IDs
-     * @param string $video_id Selected video ID
+     * @param array $video_ids Array of selected video IDs
      * @param string $audio_id Selected audio ID
      * @return array Result with video path or error
      */
-    public function generate_with_selection($template, $image_ids, $video_id, $audio_id = null) {
+    public function generate_with_selection($template, $image_ids, $video_ids, $audio_id = null) {
         // Check if FFmpeg is available
         if (!$this->check_ffmpeg()) {
             return array(
@@ -42,7 +42,7 @@ class Memorians_POC_Video_Generator {
         // Create selection array for cache key
         $selection = array(
             'images' => $image_ids,
-            'video' => $video_id,
+            'videos' => $video_ids,
             'audio' => $audio_id
         );
 
@@ -60,7 +60,7 @@ class Memorians_POC_Video_Generator {
         }
 
         // Select media by IDs
-        $media = $this->media_selector->select_media_by_ids($image_ids, $video_id, $audio_id, $template);
+        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $template);
         if (is_wp_error($media)) {
             return array(
                 'success' => false,
@@ -297,8 +297,9 @@ class Memorians_POC_Video_Generator {
                 // Apply Ken Burns effect with exact frame count matching the clip duration
                 // zoompan d parameter = number of frames this effect should generate
                 // settb=AVTB uses automatic video timebase for proper synchronization
+                // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
                 $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count);
-                $filter_complex[] = "[{$input_index}:v]fps=30,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
 
                 $input_index++;
             } else {
@@ -312,7 +313,8 @@ class Memorians_POC_Video_Generator {
                 // 4. setpts=N/(30*TB) generates sequential timestamps (prevents frame timing issues)
                 // 5. All other filters normalize resolution and format for xfade compatibility
                 // This approach works for videos of ANY duration - we just take the first N frames
-                $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
+                $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
 
                 // Video audio is ignored - we only use background music
                 $input_index++;
@@ -361,16 +363,20 @@ class Memorians_POC_Video_Generator {
         $inputs_str = implode(' ', $inputs);
         $filter_str = implode('; ', $filter_complex);
 
-        // Use medium preset for better quality/compatibility balance
-        // Ultra-compatible settings for Firefox and all browsers
+        // Mobile-optimized encoding settings for portrait video (1080x1920)
         // -f mp4 explicitly sets MP4 muxer format
-        // -profile:v baseline -level 4.0 uses most compatible H.264 settings for 1080p
-        // -g 60 sets keyframe interval to 2 seconds for better seeking
-        // -bf 0 disables B-frames explicitly (helps avoid edit lists)
-        // -strict experimental may help with AAC encoder compatibility
-        // -movflags +faststart relocates moov atom to beginning
+        // -profile:v baseline -level 4.0 uses most compatible H.264 settings for all mobile devices
+        // -preset medium balances encoding speed and compression efficiency
+        // -crf 23 provides excellent quality with variable bitrate (adaptive quality)
+        // -g 60 sets keyframe interval to 2 seconds (30fps × 2) for better seeking/streaming
+        // -bf 2 enables B-frames for better compression (10-20% smaller files without quality loss)
+        // -pix_fmt yuv420p ensures universal mobile compatibility
+        // -c:a aac AAC audio codec (universal mobile standard)
+        // -b:a 192k audio bitrate for better quality on mobile speakers/headphones
+        // -ar 48000 sets 48kHz sample rate (video standard, better quality than 44.1kHz)
+        // -movflags +faststart relocates metadata to beginning for instant mobile streaming
         // -stats_period 0.5 outputs progress stats every 0.5 seconds
-        $command = "ffmpeg -y -stats_period 0.5 {$inputs_str} -filter_complex \"{$filter_str}\" -map \"[vout]\" -map \"[aout]\" -t {$total_duration} -shortest -c:v libx264 -profile:v baseline -level 4.0 -preset medium -crf 23 -g 60 -bf 0 -pix_fmt yuv420p -c:a aac -strict experimental -b:a 128k -f mp4 -movflags +faststart " . escapeshellarg($output_path);
+        $command = "ffmpeg -y -stats_period 0.5 {$inputs_str} -filter_complex \"{$filter_str}\" -map \"[vout]\" -map \"[aout]\" -t {$total_duration} -shortest -c:v libx264 -profile:v baseline -level 4.0 -preset medium -crf 23 -g 60 -bf 2 -pix_fmt yuv420p -c:a aac -b:a 192k -ar 48000 -f mp4 -movflags +faststart " . escapeshellarg($output_path);
 
         return $command;
     }

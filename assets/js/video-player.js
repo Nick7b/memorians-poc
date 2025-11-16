@@ -16,14 +16,18 @@
         selectedVideos: [],
         selectedAudio: [],
         requirements: {
-            images: 15,
-            videos: 1,
-            audio: 1
+            images: { min: 15, max: 40 },
+            videos: { min: 1, max: 5 },
+            audio: { min: 1, max: 1 }
         },
 
         // Gallery data
         videoGallery: [],
         currentVideo: null,
+
+        // Preview tracking
+        currentPreviewVideo: null,
+        currentPreviewAudio: null,
 
         init: function() {
             this.bindEvents();
@@ -33,12 +37,9 @@
         bindEvents: function() {
             var self = this;
 
-            // Gallery buttons
-            $('#new-video-btn, #create-first-video-btn').on('click', function() {
-                self.startNewVideo();
-            });
-
+            // Back to gallery button
             $('#back-to-gallery').on('click', function() {
+                self.stopVideo();
                 self.loadVideoGallery();
             });
 
@@ -49,6 +50,8 @@
 
             // Edit selection button
             $('#edit-selection').on('click', function() {
+                self.stopVideo();
+
                 // Always load media library when editing
                 if (!self.mediaLibrary) {
                     self.loadMediaLibrary();
@@ -66,9 +69,22 @@
                 }
             });
 
-            // Template change
+            // Template change - controls panel (after video plays)
             $('#template-style').on('change', function() {
                 self.currentTemplate = $(this).val();
+                // Sync with media selection panel template selector
+                $('#template-style-selection').val($(this).val());
+                // Update description
+                self.updateTemplateDescription($(this).val());
+            });
+
+            // Template change - media selection panel (before generation)
+            $('#template-style-selection').on('change', function() {
+                self.currentTemplate = $(this).val();
+                // Sync with controls panel template selector
+                $('#template-style').val($(this).val());
+                // Update description
+                self.updateTemplateDescription($(this).val());
             });
 
             // Download button
@@ -152,11 +168,13 @@
                         self.mediaLibrary = response.data;
                         self.requirements = response.data.requirements;
 
+                        // Reset selection arrays (no pre-selection)
+                        self.selectedImages = [];
+                        self.selectedVideos = [];
+                        self.selectedAudio = [];
+
                         console.log('About to render media grid...');
                         self.renderMediaGrid();
-
-                        console.log('About to random preselect...');
-                        self.randomPreselect();
 
                         console.log('About to show media selection...');
                         self.showMediaSelection();
@@ -195,13 +213,18 @@
             });
             $('#images-grid').html(imagesHtml);
 
-            // Render videos
+            // Render videos (using similar layout to audio items)
             var videosHtml = '';
             $.each(this.mediaLibrary.videos, function(index, video) {
-                videosHtml += '<div class="media-item" data-type="video" data-id="' + video.id + '">';
-                videosHtml += '<video src="' + video.url + '" muted></video>';
-                videosHtml += '<div class="media-item-overlay"><span class="media-item-checkmark">✓</span></div>';
-                videosHtml += '<div class="media-item-label">' + video.filename + '</div>';
+                videosHtml += '<div class="video-item" data-type="video" data-id="' + video.id + '" data-url="' + video.url + '">';
+                videosHtml += '<div class="video-item-preview">';
+                videosHtml += '<video class="media-video-element" src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
+                videosHtml += '<div class="video-item-overlay"><span class="video-item-checkmark">✓</span></div>';
+                videosHtml += '</div>';
+                videosHtml += '<div class="video-item-info">';
+                videosHtml += '<div class="video-item-name">' + video.filename + '</div>';
+                videosHtml += '</div>';
+                videosHtml += '<button class="video-preview-btn" data-video-id="' + video.id + '" title="Play/Pause"><span class="video-icon">▶</span></button>';
                 videosHtml += '</div>';
             });
             $('#videos-grid').html(videosHtml);
@@ -209,56 +232,49 @@
             // Render audio
             var audioHtml = '';
             $.each(this.mediaLibrary.audio, function(index, audio) {
-                audioHtml += '<div class="audio-item" data-type="audio" data-id="' + audio.id + '">';
+                audioHtml += '<div class="audio-item" data-type="audio" data-id="' + audio.id + '" data-url="' + audio.url + '">';
                 audioHtml += '<div class="audio-item-icon">🎵</div>';
-                audioHtml += '<div class="audio-item-info"><div class="audio-item-name">' + audio.filename + '</div></div>';
+                audioHtml += '<div class="audio-item-info">';
+                audioHtml += '<div class="audio-item-name">' + audio.filename + '</div>';
+                audioHtml += '<audio class="audio-element" src="' + audio.url + '" preload="metadata"></audio>';
+                audioHtml += '</div>';
+                audioHtml += '<button class="audio-preview-btn" data-audio-id="' + audio.id + '" title="Play/Pause"><span class="audio-icon">▶</span></button>';
                 audioHtml += '<div class="audio-item-checkmark">✓</div>';
                 audioHtml += '</div>';
             });
             $('#audio-list').html(audioHtml);
 
-            // Bind click events
+            // Bind click events for selection
             $('.media-item[data-type="image"]').on('click', function() {
                 self.toggleMediaSelection('image', $(this).data('id'));
             });
 
-            $('.media-item[data-type="video"]').on('click', function() {
-                self.toggleMediaSelection('video', $(this).data('id'));
+            $('.video-item').on('click', function(e) {
+                // Don't select if clicking the preview button
+                if (!$(e.target).closest('.video-preview-btn').length) {
+                    self.toggleMediaSelection('video', $(this).data('id'));
+                }
             });
 
-            $('.audio-item').on('click', function() {
-                self.toggleMediaSelection('audio', $(this).data('id'));
-            });
-        },
-
-        randomPreselect: function() {
-            var self = this;
-
-            // Randomly select images
-            var shuffledImages = this.shuffleArray(this.mediaLibrary.images.slice());
-            this.selectedImages = shuffledImages.slice(0, this.requirements.images).map(function(img) {
-                return img.id;
+            $('.audio-item').on('click', function(e) {
+                // Don't select if clicking the preview button
+                if (!$(e.target).closest('.audio-preview-btn').length) {
+                    self.toggleMediaSelection('audio', $(this).data('id'));
+                }
             });
 
-            // Randomly select video
-            var randomVideo = this.mediaLibrary.videos[Math.floor(Math.random() * this.mediaLibrary.videos.length)];
-            this.selectedVideos = [randomVideo.id];
+            // Bind preview button events
+            $('.video-preview-btn').on('click', function(e) {
+                e.stopPropagation();
+                var videoId = $(this).data('video-id');
+                self.toggleVideoPreview(videoId, $(this));
+            });
 
-            // Randomly select audio
-            var randomAudio = this.mediaLibrary.audio[Math.floor(Math.random() * this.mediaLibrary.audio.length)];
-            this.selectedAudio = [randomAudio.id];
-
-            this.updateSelectionUI();
-        },
-
-        shuffleArray: function(array) {
-            for (var i = array.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = array[i];
-                array[i] = array[j];
-                array[j] = temp;
-            }
-            return array;
+            $('.audio-preview-btn').on('click', function(e) {
+                e.stopPropagation();
+                var audioId = $(this).data('audio-id');
+                self.toggleAudioPreview(audioId, $(this));
+            });
         },
 
         toggleMediaSelection: function(type, id) {
@@ -266,28 +282,36 @@
 
             if (type === 'image') {
                 selectedArray = this.selectedImages;
-                maxCount = this.requirements.images;
+                maxCount = this.requirements.images.max;
             } else if (type === 'video') {
                 selectedArray = this.selectedVideos;
-                maxCount = this.requirements.videos;
+                maxCount = this.requirements.videos.max;
             } else if (type === 'audio') {
                 selectedArray = this.selectedAudio;
-                maxCount = this.requirements.audio;
+                maxCount = this.requirements.audio.max;
             }
 
             var index = selectedArray.indexOf(id);
 
             if (index > -1) {
-                // Deselect
+                // Deselect - always allowed
                 selectedArray.splice(index, 1);
             } else {
-                // Select (if under limit)
+                // Select - behavior depends on media type
                 if (selectedArray.length < maxCount) {
+                    // Under limit - just add it
                     selectedArray.push(id);
                 } else {
-                    // Replace first selected item
-                    selectedArray.shift();
-                    selectedArray.push(id);
+                    // Limit reached - behavior differs by type
+                    if (type === 'image' || type === 'video') {
+                        // Images and Videos: prevent selection when max reached
+                        console.log('Selection limit reached for ' + type + '. Maximum is ' + maxCount + '. Please deselect an item first.');
+                        return;
+                    } else {
+                        // Audio: replace current selection with new one (auto-switch)
+                        selectedArray[0] = id;
+                        console.log('Auto-switching ' + type + ' selection to new item.');
+                    }
                 }
             }
 
@@ -312,9 +336,9 @@
             $('#audio-selected-count').text(this.selectedAudio.length);
 
             // Update status badges
-            this.updateStatusBadge('images', this.selectedImages.length, this.requirements.images);
-            this.updateStatusBadge('videos', this.selectedVideos.length, this.requirements.videos);
-            this.updateStatusBadge('audio', this.selectedAudio.length, this.requirements.audio);
+            this.updateStatusBadge('images', this.selectedImages.length, this.requirements.images.min, this.requirements.images.max);
+            this.updateStatusBadge('videos', this.selectedVideos.length, this.requirements.videos.min, this.requirements.videos.max);
+            this.updateStatusBadge('audio', this.selectedAudio.length, this.requirements.audio.min, this.requirements.audio.max);
 
             // Update visual selection states
             $('.media-item[data-type="image"]').each(function() {
@@ -325,15 +349,15 @@
                     $(this).removeClass('selected');
                 }
 
-                // Disable if limit reached and not selected
-                if (self.selectedImages.length >= self.requirements.images && self.selectedImages.indexOf(id) === -1) {
+                // Disable if max limit reached and not selected
+                if (self.selectedImages.length >= self.requirements.images.max && self.selectedImages.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
                 }
             });
 
-            $('.media-item[data-type="video"]').each(function() {
+            $('.video-item').each(function() {
                 var id = $(this).data('id');
                 if (self.selectedVideos.indexOf(id) > -1) {
                     $(this).addClass('selected');
@@ -341,7 +365,8 @@
                     $(this).removeClass('selected');
                 }
 
-                if (self.selectedVideos.length >= self.requirements.videos && self.selectedVideos.indexOf(id) === -1) {
+                // Disable if max limit reached and not selected
+                if (self.selectedVideos.length >= self.requirements.videos.max && self.selectedVideos.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
@@ -356,7 +381,8 @@
                     $(this).removeClass('selected');
                 }
 
-                if (self.selectedAudio.length >= self.requirements.audio && self.selectedAudio.indexOf(id) === -1) {
+                // Disable if max limit reached and not selected
+                if (self.selectedAudio.length >= self.requirements.audio.max && self.selectedAudio.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
@@ -367,27 +393,30 @@
             this.validateSelection();
         },
 
-        updateStatusBadge: function(type, current, required) {
+        updateStatusBadge: function(type, current, min, max) {
             var badge = $('#' + type + '-status');
             badge.removeClass('ready warning error');
 
-            if (current === required) {
+            if (current >= min && current <= max) {
                 badge.addClass('ready');
-                badge.text('✓ Ready');
-            } else if (current < required) {
+                badge.text('✓ Ready (' + current + ')');
+            } else if (current < min) {
                 badge.addClass('warning');
-                badge.text('⚠ Select ' + (required - current) + ' more');
+                badge.text('⚠ Need ' + (min - current) + ' more (min ' + min + ')');
             } else {
                 badge.addClass('error');
-                badge.text('✗ Too many');
+                badge.text('✗ Too many (max ' + max + ')');
             }
         },
 
         validateSelection: function() {
             var isValid = (
-                this.selectedImages.length === this.requirements.images &&
-                this.selectedVideos.length === this.requirements.videos &&
-                this.selectedAudio.length === this.requirements.audio
+                this.selectedImages.length >= this.requirements.images.min &&
+                this.selectedImages.length <= this.requirements.images.max &&
+                this.selectedVideos.length >= this.requirements.videos.min &&
+                this.selectedVideos.length <= this.requirements.videos.max &&
+                this.selectedAudio.length >= this.requirements.audio.min &&
+                this.selectedAudio.length <= this.requirements.audio.max
             );
 
             $('#start-generation').prop('disabled', !isValid);
@@ -398,6 +427,9 @@
             $('#video-container').hide();
             $('#controls-panel').hide();
             $('#info-panel').hide();
+
+            // Update template description to match current selection
+            this.updateTemplateDescription(this.currentTemplate);
         },
 
         generateVideoWithSelection: function() {
@@ -419,13 +451,17 @@
             var params = {
                 template: this.currentTemplate,
                 force: 'true',
-                video: this.selectedVideos[0],
                 audio: this.selectedAudio[0]
             };
 
             // Add images as array
             $.each(this.selectedImages, function(index, imageId) {
                 params['images[' + index + ']'] = imageId;
+            });
+
+            // Add videos as array
+            $.each(this.selectedVideos, function(index, videoId) {
+                params['videos[' + index + ']'] = videoId;
             });
 
             $.ajax({
@@ -481,9 +517,19 @@
                             $('#info-panel').show();
                             self.showVideo(response.video_url);
 
-                            // Reload gallery in background to include new video
+                            // Reload gallery data and re-render to include new video
                             console.log('Reloading gallery to include new video...');
-                            self.loadVideoGalleryData();
+                            $.ajax({
+                                url: memoriansPoC.videoHistoryUrl,
+                                dataType: 'json',
+                                success: function(galleryResponse) {
+                                    if (galleryResponse && galleryResponse.success) {
+                                        self.videoGallery = galleryResponse.videos;
+                                        self.renderGallery(); // Re-render gallery with new video
+                                        console.log('Gallery updated with new video: ' + galleryResponse.videos.length + ' videos total');
+                                    }
+                                }
+                            });
                         } else if (response.status === 'failed') {
                             console.log('=== GENERATION FAILED ===');
                             clearInterval(self.progressInterval);
@@ -591,6 +637,23 @@
             }
         },
 
+        stopVideo: function() {
+            var video = $('#memorial-video')[0];
+
+            if (video) {
+                // Pause the video
+                video.pause();
+
+                // Reset to beginning (optional, but good practice)
+                video.currentTime = 0;
+
+                // Mute the video
+                video.muted = true;
+
+                console.log('Video stopped and reset');
+            }
+        },
+
         // ===== GALLERY METHODS =====
 
         loadVideoGallery: function() {
@@ -663,7 +726,7 @@
 
                 html += '<div class="gallery-card" data-cache-key="' + video.cache_key + '">';
                 html += '  <div class="gallery-card-video">';
-                html += '    <video src="' + video.url + '" muted></video>';
+                html += '    <video src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
                 html += '    <div class="gallery-card-overlay">';
                 html += '      <button class="gallery-play-btn" data-cache-key="' + video.cache_key + '">▶ Play</button>';
                 html += '    </div>';
@@ -743,6 +806,8 @@
         },
 
         startNewVideo: function() {
+            this.stopVideo();
+
             $('#video-gallery-panel').hide();
             $('#video-container').hide();
             $('#controls-panel').hide();
@@ -751,14 +816,17 @@
             if (!this.mediaLibrary) {
                 this.loadMediaLibrary();
             } else {
-                this.randomPreselect();
+                // Reset selection arrays (no pre-selection)
+                this.selectedImages = [];
+                this.selectedVideos = [];
+                this.selectedAudio = [];
+                this.updateSelectionUI();
                 this.showMediaSelection();
             }
         },
 
         showGallery: function() {
             $('#video-gallery-panel').show();
-            $('#gallery-empty').hide();
             $('#media-selection-panel').hide();
             $('#video-container').hide();
             $('#controls-panel').hide();
@@ -766,11 +834,116 @@
         },
 
         showEmptyGallery: function() {
-            $('#video-gallery-panel').show();
-            $('#gallery-grid').hide();
-            $('#gallery-empty').show();
-            $('#media-selection-panel').hide();
+            // No videos - hide gallery entirely and show media selection
+            $('#video-gallery-panel').hide();
             $('#video-container').hide();
+            $('#controls-panel').hide();
+            $('#info-panel').hide();
+
+            // Load media library and show selection
+            if (!this.mediaLibrary) {
+                this.loadMediaLibrary();
+            } else {
+                this.showMediaSelection();
+            }
+        },
+
+        updateTemplateDescription: function(template) {
+            var descriptions = {
+                'classic': 'Traditional fade and slide transitions',
+                'modern': 'Dynamic circles and pixelize effects',
+                'elegant': 'Sophisticated fades through black/white'
+            };
+
+            var description = descriptions[template] || descriptions['classic'];
+            $('#template-description').text(description);
+        },
+
+        toggleVideoPreview: function(videoId, button) {
+            var $videoItem = $('.video-item[data-id="' + videoId + '"]');
+            var videoElement = $videoItem.find('.media-video-element')[0];
+
+            if (!videoElement) return;
+
+            if (this.currentPreviewVideo === videoId && !videoElement.paused) {
+                // Currently playing - pause it
+                videoElement.pause();
+                button.find('.video-icon').text('▶');
+            } else if (this.currentPreviewVideo === videoId && videoElement.paused) {
+                // Currently paused - reset and play from start
+                videoElement.currentTime = 0;
+                videoElement.play();
+                button.find('.video-icon').text('⏸');
+            } else {
+                // Different video - stop others and play this one
+                this.stopAllPreviews();
+                videoElement.currentTime = 0;
+                videoElement.play();
+                button.find('.video-icon').text('⏸');
+                $videoItem.addClass('previewing');
+                this.currentPreviewVideo = videoId;
+
+                // Reset when video ends
+                $(videoElement).off('ended').on('ended', function() {
+                    button.find('.video-icon').text('▶');
+                    $videoItem.removeClass('previewing');
+                    this.currentPreviewVideo = null;
+                }.bind(this));
+            }
+        },
+
+        toggleAudioPreview: function(audioId, button) {
+            var $audioItem = $('.audio-item[data-id="' + audioId + '"]');
+            var audioElement = $audioItem.find('.audio-element')[0];
+
+            if (!audioElement) return;
+
+            if (this.currentPreviewAudio === audioId && !audioElement.paused) {
+                // Currently playing - pause it
+                audioElement.pause();
+                button.find('.audio-icon').text('▶');
+            } else if (this.currentPreviewAudio === audioId && audioElement.paused) {
+                // Currently paused - reset and play from start
+                audioElement.currentTime = 0;
+                audioElement.play();
+                button.find('.audio-icon').text('⏸');
+            } else {
+                // Different audio - stop others and play this one
+                this.stopAllPreviews();
+                audioElement.currentTime = 0;
+                audioElement.play();
+                button.find('.audio-icon').text('⏸');
+                $audioItem.addClass('playing');
+                this.currentPreviewAudio = audioId;
+
+                // Reset when audio ends
+                $(audioElement).off('ended').on('ended', function() {
+                    button.find('.audio-icon').text('▶');
+                    $audioItem.removeClass('playing');
+                    this.currentPreviewAudio = null;
+                }.bind(this));
+            }
+        },
+
+        stopAllPreviews: function() {
+            // Stop all video previews
+            $('.media-video-element').each(function() {
+                this.pause();
+                this.currentTime = 0;
+            });
+            $('.video-preview-btn .video-icon').text('▶');
+            $('.video-item').removeClass('previewing');
+
+            // Stop all audio previews
+            $('.audio-element').each(function() {
+                this.pause();
+                this.currentTime = 0;
+            });
+            $('.audio-preview-btn .audio-icon').text('▶');
+            $('.audio-item').removeClass('playing');
+
+            this.currentPreviewVideo = null;
+            this.currentPreviewAudio = null;
         },
 
         formatBytes: function(bytes) {

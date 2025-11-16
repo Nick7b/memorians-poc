@@ -67,16 +67,17 @@ try {
     $generator = new Memorians_POC_Video_Generator();
 
     // Check if user provided media selection
-    if (isset($_GET['images']) && isset($_GET['video'])) {
+    if (isset($_GET['images']) && isset($_GET['videos'])) {
         // User-selected media
         $image_ids = $_GET['images'];
-        $video_id = sanitize_text_field($_GET['video']);
+        $video_ids = $_GET['videos'];
         $audio_id = isset($_GET['audio']) ? sanitize_text_field($_GET['audio']) : null;
 
-        // Sanitize image IDs
+        // Sanitize image IDs and video IDs
         $image_ids = array_map('sanitize_text_field', $image_ids);
+        $video_ids = array_map('sanitize_text_field', $video_ids);
 
-        $result = $generator->generate_with_selection($template, $image_ids, $video_id, $audio_id);
+        $result = $generator->generate_with_selection($template, $image_ids, $video_ids, $audio_id);
     } else {
         // This should not happen anymore, but keep as fallback
         $result = $generator->generate($template);

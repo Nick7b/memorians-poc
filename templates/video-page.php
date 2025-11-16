@@ -21,45 +21,36 @@
     <div id="video-gallery-panel" class="video-gallery-panel" style="display: none;">
         <div class="gallery-header">
             <h2>Your Generated Videos</h2>
-            <button id="new-video-btn" class="button button-primary">Generate New Video</button>
         </div>
 
         <div id="gallery-grid" class="gallery-grid">
             <div class="loading-placeholder">Loading video gallery...</div>
         </div>
-
-        <div id="gallery-empty" class="gallery-empty" style="display: none;">
-            <div class="empty-state">
-                <h3>No Videos Generated Yet</h3>
-                <p>Create your first memorial video compilation</p>
-                <button id="create-first-video-btn" class="button button-primary button-large">Create Your First Video</button>
-            </div>
-        </div>
     </div>
 
     <!-- Media Selection Panel -->
     <div id="media-selection-panel" class="media-selection-panel" style="display: none;">
-        <h2>Select Your Media</h2>
+        <h2>Generate Video</h2>
 
         <!-- Selection Summary -->
         <div class="selection-summary">
             <div class="summary-item">
-                <span>Images: <strong id="images-selected-count">0</strong> / <strong>15</strong> required</span>
-                <span class="status-badge" id="images-status">⚠ Select 15</span>
+                <span>Images: <strong id="images-selected-count">0</strong> selected (min 15, max 40)</span>
+                <span class="status-badge" id="images-status">⚠ Need 15 more (min 15)</span>
             </div>
             <div class="summary-item">
-                <span>Videos: <strong id="videos-selected-count">0</strong> / <strong>1</strong> required</span>
-                <span class="status-badge" id="videos-status">⚠ Select 1</span>
+                <span>Videos: <strong id="videos-selected-count">0</strong> selected (min 1, max 5)</span>
+                <span class="status-badge" id="videos-status">⚠ Need 1 more (min 1)</span>
             </div>
             <div class="summary-item">
-                <span>Audio: <strong id="audio-selected-count">0</strong> / <strong>1</strong> required</span>
-                <span class="status-badge" id="audio-status">⚠ Select 1</span>
+                <span>Audio: <strong id="audio-selected-count">0</strong> selected (required 1)</span>
+                <span class="status-badge" id="audio-status">⚠ Need 1 more (min 1)</span>
             </div>
         </div>
 
         <!-- Images Section -->
         <div class="media-section">
-            <h3>Images (Select 15)</h3>
+            <h3>Images (Select 15-40)</h3>
             <div id="images-grid" class="media-grid">
                 <div class="loading-placeholder">Loading images...</div>
             </div>
@@ -67,7 +58,7 @@
 
         <!-- Videos Section -->
         <div class="media-section">
-            <h3>Videos (Select 1)</h3>
+            <h3>Videos (Select 1-5)</h3>
             <div id="videos-grid" class="media-grid">
                 <div class="loading-placeholder">Loading videos...</div>
             </div>
@@ -81,6 +72,19 @@
             </div>
         </div>
 
+        <!-- Template Selection -->
+        <div class="media-section">
+            <h3>Video Style</h3>
+            <div class="template-selector-panel">
+                <select id="template-style-selection" class="template-select">
+                    <option value="classic">Classic</option>
+                    <option value="modern">Modern</option>
+                    <option value="elegant">Elegant</option>
+                </select>
+                <p id="template-description" class="template-description">Traditional fade and slide transitions</p>
+            </div>
+        </div>
+
         <!-- Generate Button -->
         <div class="generate-button-container">
             <button id="start-generation" class="button button-primary button-large" disabled>
@@ -91,7 +95,7 @@
 
     <div id="video-container" class="video-wrapper">
         <!-- Video player will be inserted here -->
-        <div id="loading-screen" class="loading-screen">
+        <div id="loading-screen" class="loading-screen" style="display: none;">
             <div class="loading-content">
                 <div class="spinner"></div>
                 <h2>Creating Your Memorial Video...</h2>
@@ -124,20 +128,9 @@
     </div>
 
     <div class="controls-panel" id="controls-panel" style="display: none;">
-        <div class="template-selector">
-            <label for="template-style">Video Style:</label>
-            <select id="template-style">
-                <option value="classic">Classic</option>
-                <option value="modern">Modern</option>
-                <option value="elegant">Elegant</option>
-            </select>
-        </div>
-
         <div class="action-buttons">
             <button id="back-to-gallery" class="button">← Back to Gallery</button>
-            <button id="edit-selection" class="button">Edit Media Selection</button>
             <button id="download-video" class="button" style="display: none;">Download Video</button>
-            <button id="fullscreen-btn" class="button" style="display: none;">Fullscreen</button>
         </div>
     </div>
 

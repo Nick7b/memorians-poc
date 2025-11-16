@@ -67,14 +67,14 @@ class Memorians_POC_Media_Selector {
     }
 
     /**
-     * Create sequence of media items with video randomly placed
+     * Create sequence of images and videos for compilation
      *
      * @param array $images Selected images
-     * @param string $video Selected video
+     * @param array $videos Selected videos
      * @param string $template Template style
      * @return array Sequence array
      */
-    private function create_sequence($images, $video, $template) {
+    private function create_sequence($images, $videos, $template) {
         $sequence = array();
 
         // Add images to sequence
@@ -87,18 +87,67 @@ class Memorians_POC_Media_Selector {
             );
         }
 
-        // Insert video at random position (not first or last)
-        $video_position = rand(3, count($sequence) - 3);
-        array_splice($sequence, $video_position, 0, array(
-            array(
-                'type' => 'video',
-                'path' => $video,
-                'index' => $video_position,
-                'duration' => 4 // 4 seconds per video clip to match images
-            )
-        ));
+        // Calculate video positions - distribute evenly throughout sequence
+        // Avoid first 3 and last 3 positions for better flow
+        $total_slots = count($sequence);
+        $video_count = count($videos);
+        $safe_start = 3;
+        $safe_end = $total_slots - 3;
+        $safe_range = $safe_end - $safe_start;
+
+        // Calculate interval between videos
+        $interval = floor($safe_range / ($video_count + 1));
+
+        // Insert videos at calculated positions
+        foreach ($videos as $video_index => $video) {
+            // Get actual video duration
+            $video_duration = $this->get_video_duration($video);
+
+            // Calculate position for this video
+            // Start from safe_start, then add interval for each video
+            $position = $safe_start + ($interval * ($video_index + 1));
+
+            // Adjust for videos already inserted (each insertion shifts positions)
+            $adjusted_position = $position + $video_index;
+
+            // Insert video at calculated position
+            array_splice($sequence, $adjusted_position, 0, array(
+                array(
+                    'type' => 'video',
+                    'path' => $video,
+                    'index' => $adjusted_position,
+                    'duration' => $video_duration // Use actual video duration
+                )
+            ));
+        }
 
         return $sequence;
+    }
+
+    /**
+     * Get video duration in seconds using ffprobe
+     *
+     * @param string $video_path Path to video file
+     * @return float Video duration in seconds (defaults to 4 if detection fails)
+     */
+    private function get_video_duration($video_path) {
+        // Use ffprobe to get exact video duration
+        $command = "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($video_path);
+        $output = shell_exec($command);
+
+        if ($output !== null) {
+            $duration = floatval(trim($output));
+
+            // Validate duration is reasonable (between 0.1 and 300 seconds / 5 minutes)
+            if ($duration > 0.1 && $duration <= 300) {
+                error_log("Video duration detected: {$duration} seconds for " . basename($video_path));
+                return $duration;
+            }
+        }
+
+        // Fallback to 4 seconds if detection fails
+        error_log("Failed to detect video duration for " . basename($video_path) . ", using default 4 seconds");
+        return 4;
     }
 
     /**
@@ -188,9 +237,9 @@ class Memorians_POC_Media_Selector {
             'videos' => $videos,
             'audio' => $audio,
             'requirements' => array(
-                'images' => 15,
-                'videos' => 1,
-                'audio' => 1
+                'images' => array('min' => 15, 'max' => 40),
+                'videos' => array('min' => 1, 'max' => 5),
+                'audio' => array('min' => 1, 'max' => 1)
             )
         );
     }
@@ -210,19 +259,22 @@ class Memorians_POC_Media_Selector {
      * Select specific media by IDs for video compilation
      *
      * @param array $image_ids Array of image filenames
-     * @param string $video_id Video filename
+     * @param array $video_ids Array of video filenames
      * @param string $audio_id Audio filename
      * @param string $template Template style
      * @return array|WP_Error Array of selected media or error
      */
-    public function select_media_by_ids($image_ids, $video_id, $audio_id, $template = 'classic') {
-        // Validate we have the right quantities
-        if (count($image_ids) !== 15) {
-            return new WP_Error('invalid_selection', 'Exactly 15 images are required. Received: ' . count($image_ids));
+    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $template = 'classic') {
+        // Validate image count (min 15, max 40)
+        $image_count = count($image_ids);
+        if ($image_count < 15 || $image_count > 40) {
+            return new WP_Error('invalid_selection', 'Images must be between 15 and 40. Received: ' . $image_count);
         }
 
-        if (empty($video_id)) {
-            return new WP_Error('invalid_selection', 'Exactly 1 video is required.');
+        // Validate video count (min 1, max 5)
+        $video_count = count($video_ids);
+        if ($video_count < 1 || $video_count > 5) {
+            return new WP_Error('invalid_selection', 'Videos must be between 1 and 5. Received: ' . $video_count);
         }
 
         // Get all available media to validate IDs
@@ -253,11 +305,14 @@ class Memorians_POC_Media_Selector {
             $selected_images[] = $valid_image_ids[$img_id];
         }
 
-        // Resolve video ID to path
-        if (!isset($valid_video_ids[$video_id])) {
-            return new WP_Error('invalid_media', 'Invalid video ID: ' . $video_id);
+        // Resolve video IDs to paths
+        $selected_videos = array();
+        foreach ($video_ids as $vid_id) {
+            if (!isset($valid_video_ids[$vid_id])) {
+                return new WP_Error('invalid_media', 'Invalid video ID: ' . $vid_id);
+            }
+            $selected_videos[] = $valid_video_ids[$vid_id];
         }
-        $selected_video = $valid_video_ids[$video_id];
 
         // Resolve audio ID to path (optional)
         $selected_audio = null;
@@ -266,11 +321,11 @@ class Memorians_POC_Media_Selector {
         }
 
         // Create compilation sequence
-        $sequence = $this->create_sequence($selected_images, $selected_video, $template);
+        $sequence = $this->create_sequence($selected_images, $selected_videos, $template);
 
         return array(
             'images' => $selected_images,
-            'video' => $selected_video,
+            'videos' => $selected_videos,
             'bg_image' => null,
             'audio' => $selected_audio,
             'sequence' => $sequence,
@@ -289,30 +344,31 @@ class Memorians_POC_Media_Selector {
         // Frame count is passed from video generator based on clip duration
         // Default is 120 frames (4 seconds at 30fps) for backward compatibility
         // IMPORTANT: fps=30 parameter ensures zoompan outputs at exactly 30fps
+        // Mobile-optimized: 1080x1920 portrait resolution for full-screen mobile viewing
         $patterns = array(
             // Zoom in slowly from center
-            "zoompan=z='min(zoom+0.0015,1.3)':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.0015,1.3)':d={$frame_count}:s=1080x1920:fps=30",
 
             // Zoom out from close
-            "zoompan=z='if(lte(zoom,1.0),1.3,max(1.0,zoom-0.0015))':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='if(lte(zoom,1.0),1.3,max(1.0,zoom-0.0015))':d={$frame_count}:s=1080x1920:fps=30",
 
             // Pan left with slight zoom
-            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)-((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)-((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
 
             // Pan right with slight zoom
-            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.001,1.2)':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*0.5*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
 
             // Zoom to center from top-left
-            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)-(iw/10)+(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)-(ih/10)+(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)-(iw/10)+(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)-(ih/10)+(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
 
             // Zoom to center from bottom-right
-            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)+(iw/10)-(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)+(ih/10)-(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.002,1.4)':x='iw/2-(iw/zoom/2)+(iw/10)-(in*(iw/10)/{$frame_count})':y='ih/2-(ih/zoom/2)+(ih/10)-(in*(ih/10)/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
 
             // Slow zoom with vertical pan up
-            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)-((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30",
+            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)-((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30",
 
             // Slow zoom with vertical pan down
-            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1920x1080:fps=30"
+            "zoompan=z='min(zoom+0.0012,1.25)':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps=30"
         );
 
         // Select pattern based on index (cycling through patterns)

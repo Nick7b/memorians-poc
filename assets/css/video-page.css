@@ -503,7 +503,237 @@ body.memorians-poc-page {
     opacity: 1;
 }
 
+/* Video Items - Similar layout to audio items */
+.video-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.video-item:hover {
+    background: #f0f0f0;
+    border-color: #667eea;
+}
+
+.video-item.selected {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.video-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.video-item-preview {
+    position: relative;
+    width: 180px;
+    height: 101px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+
+.video-item-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-item-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.video-item.selected .video-item-overlay {
+    opacity: 1;
+}
+
+.video-item-checkmark {
+    color: white;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.video-item-info {
+    flex: 1;
+}
+
+.video-item-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.video-item.previewing {
+    background: rgba(231, 76, 60, 0.05);
+    border-color: #e74c3c;
+}
+
+/* Mobile - smaller preview */
+@media (max-width: 640px) {
+    .video-item {
+        padding: 12px 15px;
+        gap: 12px;
+    }
+
+    .video-item-preview {
+        width: 120px;
+        height: 68px;
+    }
+
+    .video-item-checkmark {
+        font-size: 1.5em;
+    }
+}
+
+/* Video Preview Button - Similar to audio button */
+.video-preview-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.video-preview-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.1);
+}
+
+.video-item.previewing .video-preview-btn {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.video-item.previewing .video-preview-btn:hover {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+/* Audio Preview Button */
+.audio-preview-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.audio-preview-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.1);
+}
+
+.audio-item.playing .audio-preview-btn {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.audio-item.playing .audio-preview-btn:hover {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+/* Hide native audio/video controls */
+.audio-element,
+.media-video-element {
+    pointer-events: none;
+}
+
+/* Video list container - single column like audio */
+#videos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* Generate Button Container */
+/* Template Selector Panel in Media Selection */
+.template-selector-panel {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+}
+
+.template-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.template-select:hover {
+    border-color: #667eea;
+}
+
+.template-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.template-description {
+    margin: 0;
+    font-size: 0.9em;
+    color: #718096;
+    line-height: 1.5;
+}
+
+/* Mobile - smaller padding */
+@media (max-width: 640px) {
+    .template-selector-panel {
+        padding: 15px;
+    }
+
+    .template-select {
+        font-size: 0.95em;
+        padding: 10px 12px;
+    }
+
+    .template-description {
+        font-size: 0.85em;
+    }
+}
+
 .generate-button-container {
     text-align: center;
     margin-top: 40px;
@@ -551,8 +781,18 @@ body.memorians-poc-page {
 
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 10px;
+}
+
+/* Mobile responsive - single column on small screens */
+@media (max-width: 640px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 10px;
+    }
 }
 
 .gallery-card {
@@ -561,6 +801,7 @@ body.memorians-poc-page {
     overflow: hidden;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    max-width: 100%;
 }
 
 .gallery-card:hover {
@@ -568,11 +809,26 @@ body.memorians-poc-page {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
+/* Mobile - disable hover transform to prevent layout issues */
+@media (max-width: 640px) {
+    .gallery-card:hover {
+        transform: none;
+    }
+}
+
 .gallery-card-video {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 9 / 16; /* Portrait aspect ratio for mobile videos */
     background: #000;
     overflow: hidden;
+    max-height: 500px; /* Prevent overly tall cards on desktop */
+}
+
+/* Desktop - limit portrait video height */
+@media (min-width: 1024px) {
+    .gallery-card-video {
+        max-height: 400px;
+    }
 }
 
 .gallery-card-video video {
@@ -620,12 +876,28 @@ body.memorians-poc-page {
     padding: 20px;
 }
 
+/* Mobile - reduce padding */
+@media (max-width: 640px) {
+    .gallery-card-info {
+        padding: 15px;
+    }
+}
+
 .gallery-card-meta {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
     font-size: 0.9em;
     color: #718096;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+/* Mobile - smaller font */
+@media (max-width: 640px) {
+    .gallery-card-meta {
+        font-size: 0.85em;
+    }
 }
 
 .gallery-card-details {
@@ -635,6 +907,13 @@ body.memorians-poc-page {
     margin-bottom: 15px;
     font-size: 0.95em;
     color: #4a5568;
+}
+
+/* Mobile - smaller font */
+@media (max-width: 640px) {
+    .gallery-card-details {
+        font-size: 0.9em;
+    }
 }
 
 .gallery-card-actions {
