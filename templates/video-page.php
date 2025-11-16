@@ -72,6 +72,14 @@
             </div>
         </div>
 
+        <!-- Background Image Section -->
+        <div class="media-section">
+            <h3>Background Image (Optional)</h3>
+            <div id="background-list" class="background-list">
+                <div class="loading-placeholder">Loading backgrounds...</div>
+            </div>
+        </div>
+
         <!-- Template Selection -->
         <div class="media-section">
             <h3>Video Style</h3>

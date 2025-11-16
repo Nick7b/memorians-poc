@@ -28,9 +28,10 @@ class Memorians_POC_Video_Generator {
      * @param array $image_ids Array of selected image IDs
      * @param array $video_ids Array of selected video IDs
      * @param string $audio_id Selected audio ID
+     * @param string $background_id Selected background image ID (optional)
      * @return array Result with video path or error
      */
-    public function generate_with_selection($template, $image_ids, $video_ids, $audio_id = null) {
+    public function generate_with_selection($template, $image_ids, $video_ids, $audio_id = null, $background_id = null) {
         // Check if FFmpeg is available
         if (!$this->check_ffmpeg()) {
             return array(
@@ -43,7 +44,8 @@ class Memorians_POC_Video_Generator {
         $selection = array(
             'images' => $image_ids,
             'videos' => $video_ids,
-            'audio' => $audio_id
+            'audio' => $audio_id,
+            'background' => $background_id
         );
 
         // Get cache key based on selection
@@ -60,7 +62,7 @@ class Memorians_POC_Video_Generator {
         }
 
         // Select media by IDs
-        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $template);
+        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id, $template);
         if (is_wp_error($media)) {
             return array(
                 'success' => false,

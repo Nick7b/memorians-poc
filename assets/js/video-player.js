@@ -15,10 +15,12 @@
         selectedImages: [],
         selectedVideos: [],
         selectedAudio: [],
+        selectedBackground: null, // Single background ID or null for no background
         requirements: {
             images: { min: 15, max: 40 },
             videos: { min: 1, max: 5 },
-            audio: { min: 1, max: 1 }
+            audio: { min: 1, max: 1 },
+            background: { min: 0, max: 1 } // Optional
         },
 
         // Gallery data
@@ -30,6 +32,25 @@
         currentPreviewAudio: null,
 
         init: function() {
+            // Initialize arrays as empty to prevent any type corruption
+            this.selectedImages = [];
+            this.selectedVideos = [];
+            this.selectedAudio = [];
+            this.selectedBackground = null;
+
+            // CRITICAL: Ensure requirements are properly set with correct values
+            // This prevents any corruption from previous state
+            this.requirements = {
+                images: { min: 15, max: 40 },
+                videos: { min: 1, max: 5 },
+                audio: { min: 1, max: 1 },
+                background: { min: 0, max: 1 }
+            };
+
+            console.log('Initialized with requirements:', JSON.stringify(this.requirements));
+            console.log('Images max:', this.requirements.images.max);
+            console.log('Videos max:', this.requirements.videos.max);
+
             this.bindEvents();
             this.loadVideoGallery(); // Start by loading gallery
         },
@@ -148,38 +169,62 @@
         loadMediaLibrary: function() {
             var self = this;
 
-            console.log('=== LOADING MEDIA LIBRARY ===');
-            console.log('URL:', memoriansPoC.mediaLibraryUrl);
-
             $.ajax({
                 url: memoriansPoC.mediaLibraryUrl,
                 dataType: 'json',
                 success: function(response) {
-                    console.log('=== MEDIA LIBRARY RESPONSE ===');
-                    console.log('Response:', response);
-                    console.log('Success:', response && response.success);
-                    console.log('Has data:', response && response.data);
-
                     if (response && response.success) {
-                        console.log('Images count:', response.data.images.length);
-                        console.log('Videos count:', response.data.videos.length);
-                        console.log('Audio count:', response.data.audio.length);
+                        console.log('Media library loaded: ' + response.data.images.length + ' images, ' +
+                                   response.data.videos.length + ' videos, ' +
+                                   response.data.audio.length + ' audio tracks');
 
                         self.mediaLibrary = response.data;
-                        self.requirements = response.data.requirements;
+
+                        // Debug requirements from backend
+                        console.log('Requirements from backend:', JSON.stringify(response.data.requirements));
+                        console.log('Backend images.max:', response.data.requirements?.images?.max);
+                        console.log('Backend videos.max:', response.data.requirements?.videos?.max);
+
+                        // Validate requirements structure before using it
+                        if (response.data.requirements &&
+                            response.data.requirements.images &&
+                            response.data.requirements.videos &&
+                            typeof response.data.requirements.images.max === 'number' &&
+                            typeof response.data.requirements.videos.max === 'number') {
+                            // Backend requirements are valid, use them
+                            self.requirements = {
+                                images: {
+                                    min: response.data.requirements.images.min || 15,
+                                    max: response.data.requirements.images.max || 40
+                                },
+                                videos: {
+                                    min: response.data.requirements.videos.min || 1,
+                                    max: response.data.requirements.videos.max || 5
+                                },
+                                audio: {
+                                    min: response.data.requirements.audio ? response.data.requirements.audio.min : 1,
+                                    max: response.data.requirements.audio ? response.data.requirements.audio.max : 1
+                                },
+                                background: {
+                                    min: response.data.requirements.background ? response.data.requirements.background.min : 0,
+                                    max: response.data.requirements.background ? response.data.requirements.background.max : 1
+                                }
+                            };
+                            console.log('Requirements set to:', JSON.stringify(self.requirements));
+                            console.log('Final images.max:', self.requirements.images.max);
+                            console.log('Final videos.max:', self.requirements.videos.max);
+                        } else {
+                            console.warn('Backend requirements invalid, using defaults');
+                            console.warn('Keeping default requirements:', JSON.stringify(self.requirements));
+                        }
 
                         // Reset selection arrays (no pre-selection)
                         self.selectedImages = [];
                         self.selectedVideos = [];
                         self.selectedAudio = [];
 
-                        console.log('About to render media grid...');
                         self.renderMediaGrid();
-
-                        console.log('About to show media selection...');
                         self.showMediaSelection();
-
-                        console.log('=== MEDIA SELECTION COMPLETE ===');
                     } else {
                         var errorMsg = 'Unknown error';
                         if (response && response.error) {
@@ -201,11 +246,13 @@
 
         renderMediaGrid: function() {
             var self = this;
+            console.log('renderMediaGrid called');
 
-            // Render images
+            // Render images with onclick for Safari compatibility
             var imagesHtml = '';
             $.each(this.mediaLibrary.images, function(index, image) {
-                imagesHtml += '<div class="media-item" data-type="image" data-id="' + image.id + '">';
+                // Add onclick="void(0)" for better Safari event delegation support
+                imagesHtml += '<div class="media-item" data-type="image" data-id="' + image.id + '" onclick="void(0)">';
                 imagesHtml += '<img src="' + image.url + '" alt="' + image.filename + '">';
                 imagesHtml += '<div class="media-item-overlay"><span class="media-item-checkmark">✓</span></div>';
                 imagesHtml += '<div class="media-item-label">' + image.filename + '</div>';
@@ -213,10 +260,11 @@
             });
             $('#images-grid').html(imagesHtml);
 
-            // Render videos (using similar layout to audio items)
+            // Render videos with onclick for Safari compatibility
             var videosHtml = '';
             $.each(this.mediaLibrary.videos, function(index, video) {
-                videosHtml += '<div class="video-item" data-type="video" data-id="' + video.id + '" data-url="' + video.url + '">';
+                // Add onclick="void(0)" for better Safari event delegation support
+                videosHtml += '<div class="video-item" data-type="video" data-id="' + video.id + '" data-url="' + video.url + '" onclick="void(0)">';
                 videosHtml += '<div class="video-item-preview">';
                 videosHtml += '<video class="media-video-element" src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
                 videosHtml += '<div class="video-item-overlay"><span class="video-item-checkmark">✓</span></div>';
@@ -244,84 +292,204 @@
             });
             $('#audio-list').html(audioHtml);
 
-            // Bind click events for selection
-            $('.media-item[data-type="image"]').on('click', function() {
-                self.toggleMediaSelection('image', $(this).data('id'));
-            });
+            // Render background images
+            var backgroundHtml = '';
 
-            $('.video-item').on('click', function(e) {
-                // Don't select if clicking the preview button
-                if (!$(e.target).closest('.video-preview-btn').length) {
-                    self.toggleMediaSelection('video', $(this).data('id'));
-                }
-            });
+            // Add "No background" option first
+            backgroundHtml += '<div class="background-item selected" data-type="background" data-id="none">';
+            backgroundHtml += '<div class="background-item-preview">';
+            backgroundHtml += '<div class="no-background-placeholder">No Background</div>';
+            backgroundHtml += '</div>';
+            backgroundHtml += '<div class="background-item-info">';
+            backgroundHtml += '<div class="background-item-name">No Background</div>';
+            backgroundHtml += '</div>';
+            backgroundHtml += '<div class="background-item-checkmark">✓</div>';
+            backgroundHtml += '</div>';
 
-            $('.audio-item').on('click', function(e) {
-                // Don't select if clicking the preview button
-                if (!$(e.target).closest('.audio-preview-btn').length) {
-                    self.toggleMediaSelection('audio', $(this).data('id'));
-                }
+            // Add actual background images
+            $.each(this.mediaLibrary.backgrounds || [], function(index, bg) {
+                backgroundHtml += '<div class="background-item" data-type="background" data-id="' + bg.id + '">';
+                backgroundHtml += '<div class="background-item-preview">';
+                backgroundHtml += '<img src="' + bg.url + '" alt="' + bg.filename + '">';
+                backgroundHtml += '</div>';
+                backgroundHtml += '<div class="background-item-info">';
+                backgroundHtml += '<div class="background-item-name">' + bg.filename + '</div>';
+                backgroundHtml += '</div>';
+                backgroundHtml += '<div class="background-item-checkmark">✓</div>';
+                backgroundHtml += '</div>';
             });
+            $('#background-list').html(backgroundHtml);
 
-            // Bind preview button events
-            $('.video-preview-btn').on('click', function(e) {
+            // Unbind ALL events with our namespace first to prevent any duplicates
+            $('#images-grid').off('click.memorians');
+            $('#videos-grid').off('click.memorians');
+            $('#audio-list').off('click.memorians');
+            $('#background-list').off('click.memorians');
+
+            // Use event delegation with namespaced events for clean binding/unbinding
+            // CRITICAL: Force all IDs to strings before passing to selection functions
+            $('#images-grid').on('click.memorians', '.media-item[data-type="image"]', function(e) {
+                // Prevent event from bubbling up
                 e.stopPropagation();
-                var videoId = $(this).data('video-id');
+                e.stopImmediatePropagation();
+
+                // Force to string to prevent Safari type issues
+                var id = String($(this).attr('data-id'));
+                console.log('Image clicked - ID:', id, 'Type:', typeof id);
+                self.toggleMediaSelection('image', id);
+                return false; // Prevent any further event processing
+            });
+
+            $('#videos-grid').on('click.memorians', '.video-item', function(e) {
+                // Don't select if clicking the preview button
+                if ($(e.target).closest('.video-preview-btn').length) {
+                    return;
+                }
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                // Force to string to prevent Safari type issues
+                var id = String($(this).attr('data-id'));
+                console.log('Video clicked - ID:', id, 'Type:', typeof id);
+                self.toggleMediaSelection('video', id);
+                return false;
+            });
+
+            $('#videos-grid').on('click.memorians', '.video-preview-btn', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // Force to string for consistency
+                var videoId = String($(this).attr('data-video-id'));
                 self.toggleVideoPreview(videoId, $(this));
+                return false;
             });
 
-            $('.audio-preview-btn').on('click', function(e) {
+            $('#audio-list').on('click.memorians', '.audio-item', function(e) {
+                // Don't select if clicking the preview button
+                if ($(e.target).closest('.audio-preview-btn').length) {
+                    return;
+                }
                 e.stopPropagation();
-                var audioId = $(this).data('audio-id');
+                e.stopImmediatePropagation();
+
+                // Force to string to prevent Safari type issues
+                var id = String($(this).attr('data-id'));
+                console.log('Audio clicked - ID:', id, 'Type:', typeof id);
+                self.toggleMediaSelection('audio', id);
+                return false;
+            });
+
+            $('#audio-list').on('click.memorians', '.audio-preview-btn', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // Force to string for consistency
+                var audioId = String($(this).attr('data-audio-id'));
                 self.toggleAudioPreview(audioId, $(this));
+                return false;
+            });
+
+            $('#background-list').on('click.memorians', '.background-item', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // Force to string to prevent Safari type issues
+                var id = String($(this).attr('data-id'));
+                console.log('Background clicked - ID:', id, 'Type:', typeof id);
+                self.toggleMediaSelection('background', id);
+                return false;
             });
         },
 
         toggleMediaSelection: function(type, id) {
-            var selectedArray, maxCount;
+            // CRITICAL FIX: Force ID to string to prevent type mismatch on Safari
+            // Safari's aggressive type conversion can cause numbers in arrays
+            id = String(id);
+            console.log('Toggle selection - type:', type, 'id:', id, '(typeof:', typeof id + ')');
+            console.log('Current requirements:', JSON.stringify(this.requirements));
+            console.log('Images max:', this.requirements.images.max, 'Videos max:', this.requirements.videos.max);
 
-            if (type === 'image') {
-                selectedArray = this.selectedImages;
-                maxCount = this.requirements.images.max;
-            } else if (type === 'video') {
-                selectedArray = this.selectedVideos;
-                maxCount = this.requirements.videos.max;
-            } else if (type === 'audio') {
-                selectedArray = this.selectedAudio;
-                maxCount = this.requirements.audio.max;
+            // Handle background separately (single selection, optional)
+            if (type === 'background') {
+                // Always allow selection - just replace current
+                this.selectedBackground = id === 'none' ? null : String(id);
+                this.updateSelectionUI();
+                return;
             }
 
-            var index = selectedArray.indexOf(id);
+            var index;
 
-            if (index > -1) {
-                // Deselect - always allowed
-                selectedArray.splice(index, 1);
-            } else {
-                // Select - behavior depends on media type
-                if (selectedArray.length < maxCount) {
-                    // Under limit - just add it
-                    selectedArray.push(id);
+            // Work directly with the actual arrays, not references
+            if (type === 'image') {
+                // Ensure array contains only strings for consistent comparison
+                this.selectedImages = this.selectedImages.map(function(item) { return String(item); });
+
+                // DEFENSIVE: Get max value with fallback
+                var maxImages = (this.requirements && this.requirements.images && this.requirements.images.max) || 40;
+                console.log('Image selection - Current count:', this.selectedImages.length, 'Max allowed:', maxImages);
+
+                index = this.selectedImages.indexOf(id);
+                console.log('Image array:', JSON.stringify(this.selectedImages), 'Looking for:', id, 'Found at index:', index);
+
+                if (index > -1) {
+                    // Deselect
+                    this.selectedImages.splice(index, 1);
+                    console.log('Image deselected:', id, 'Remaining:', this.selectedImages.length);
                 } else {
-                    // Limit reached - behavior differs by type
-                    if (type === 'image' || type === 'video') {
-                        // Images and Videos: prevent selection when max reached
-                        console.log('Selection limit reached for ' + type + '. Maximum is ' + maxCount + '. Please deselect an item first.');
-                        return;
+                    // Select
+                    if (this.selectedImages.length < maxImages) {
+                        this.selectedImages.push(id);
+                        console.log('Image selected:', id, '(' + this.selectedImages.length + '/' + maxImages + ')');
                     } else {
-                        // Audio: replace current selection with new one (auto-switch)
-                        selectedArray[0] = id;
-                        console.log('Auto-switching ' + type + ' selection to new item.');
+                        console.log('Selection limit reached for images (' + maxImages + ')');
+                        console.warn('DEBUGGING: requirements object:', JSON.stringify(this.requirements));
+                        return;
                     }
                 }
-            }
-
-            // Update the arrays
-            if (type === 'image') {
-                this.selectedImages = selectedArray;
             } else if (type === 'video') {
-                this.selectedVideos = selectedArray;
+                // Ensure array contains only strings for consistent comparison
+                this.selectedVideos = this.selectedVideos.map(function(item) { return String(item); });
+
+                // DEFENSIVE: Get max value with fallback
+                var maxVideos = (this.requirements && this.requirements.videos && this.requirements.videos.max) || 5;
+                console.log('Video selection - Current count:', this.selectedVideos.length, 'Max allowed:', maxVideos);
+
+                index = this.selectedVideos.indexOf(id);
+                console.log('Video array:', JSON.stringify(this.selectedVideos), 'Looking for:', id, 'Found at index:', index);
+
+                if (index > -1) {
+                    // Deselect
+                    this.selectedVideos.splice(index, 1);
+                    console.log('Video deselected:', id, 'Remaining:', this.selectedVideos.length);
+                } else {
+                    // Select
+                    if (this.selectedVideos.length < maxVideos) {
+                        this.selectedVideos.push(id);
+                        console.log('Video selected:', id, '(' + this.selectedVideos.length + '/' + maxVideos + ')');
+                    } else {
+                        console.log('Selection limit reached for videos (' + maxVideos + ')');
+                        console.warn('DEBUGGING: requirements object:', JSON.stringify(this.requirements));
+                        return;
+                    }
+                }
             } else if (type === 'audio') {
-                this.selectedAudio = selectedArray;
+                // Ensure array contains only strings for consistent comparison
+                this.selectedAudio = this.selectedAudio.map(function(item) { return String(item); });
+
+                index = this.selectedAudio.indexOf(id);
+
+                if (index > -1) {
+                    // Deselect
+                    this.selectedAudio.splice(index, 1);
+                    console.log('Audio deselected:', id);
+                } else {
+                    // Select - auto-switch for audio (only 1 allowed)
+                    if (this.selectedAudio.length < this.requirements.audio.max) {
+                        this.selectedAudio.push(id);
+                        console.log('Audio selected:', id);
+                    } else {
+                        this.selectedAudio[0] = id;
+                        console.log('Auto-switching audio selection to:', id);
+                    }
+                }
             }
 
             this.updateSelectionUI();
@@ -341,16 +509,23 @@
             this.updateStatusBadge('audio', this.selectedAudio.length, this.requirements.audio.min, this.requirements.audio.max);
 
             // Update visual selection states
+            // CRITICAL: Ensure all arrays contain only strings before comparison
+            var stringImages = self.selectedImages.map(function(item) { return String(item); });
+            var stringVideos = self.selectedVideos.map(function(item) { return String(item); });
+            var stringAudio = self.selectedAudio.map(function(item) { return String(item); });
+
             $('.media-item[data-type="image"]').each(function() {
-                var id = $(this).data('id');
-                if (self.selectedImages.indexOf(id) > -1) {
+                // Force ID to string for consistent comparison
+                var id = String($(this).attr('data-id'));
+
+                if (stringImages.indexOf(id) > -1) {
                     $(this).addClass('selected');
                 } else {
                     $(this).removeClass('selected');
                 }
 
                 // Disable if max limit reached and not selected
-                if (self.selectedImages.length >= self.requirements.images.max && self.selectedImages.indexOf(id) === -1) {
+                if (stringImages.length >= self.requirements.images.max && stringImages.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
@@ -358,15 +533,17 @@
             });
 
             $('.video-item').each(function() {
-                var id = $(this).data('id');
-                if (self.selectedVideos.indexOf(id) > -1) {
+                // Force ID to string for consistent comparison
+                var id = String($(this).attr('data-id'));
+
+                if (stringVideos.indexOf(id) > -1) {
                     $(this).addClass('selected');
                 } else {
                     $(this).removeClass('selected');
                 }
 
                 // Disable if max limit reached and not selected
-                if (self.selectedVideos.length >= self.requirements.videos.max && self.selectedVideos.indexOf(id) === -1) {
+                if (stringVideos.length >= self.requirements.videos.max && stringVideos.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
@@ -374,18 +551,35 @@
             });
 
             $('.audio-item').each(function() {
-                var id = $(this).data('id');
-                if (self.selectedAudio.indexOf(id) > -1) {
+                // Force ID to string for consistent comparison
+                var id = String($(this).attr('data-id'));
+
+                if (stringAudio.indexOf(id) > -1) {
                     $(this).addClass('selected');
                 } else {
                     $(this).removeClass('selected');
                 }
 
                 // Disable if max limit reached and not selected
-                if (self.selectedAudio.length >= self.requirements.audio.max && self.selectedAudio.indexOf(id) === -1) {
+                if (stringAudio.length >= self.requirements.audio.max && stringAudio.indexOf(id) === -1) {
                     $(this).addClass('disabled');
                 } else {
                     $(this).removeClass('disabled');
+                }
+            });
+
+            $('.background-item').each(function() {
+                // Force ID to string for consistent comparison
+                var id = String($(this).attr('data-id'));
+                var isNone = id === 'none';
+                var backgroundStr = self.selectedBackground ? String(self.selectedBackground) : null;
+                var isSelected = (isNone && backgroundStr === null) ||
+                                (backgroundStr === id);
+
+                if (isSelected) {
+                    $(this).addClass('selected');
+                } else {
+                    $(this).removeClass('selected');
                 }
             });
 
@@ -453,6 +647,11 @@
                 force: 'true',
                 audio: this.selectedAudio[0]
             };
+
+            // Add background if selected
+            if (this.selectedBackground) {
+                params.background = this.selectedBackground;
+            }
 
             // Add images as array
             $.each(this.selectedImages, function(index, imageId) {
@@ -861,7 +1060,7 @@
         },
 
         toggleVideoPreview: function(videoId, button) {
-            var $videoItem = $('.video-item[data-id="' + videoId + '"]');
+            var $videoItem = $('#videos-grid').find('.video-item[data-id="' + videoId + '"]');
             var videoElement = $videoItem.find('.media-video-element')[0];
 
             if (!videoElement) return;
@@ -894,7 +1093,7 @@
         },
 
         toggleAudioPreview: function(audioId, button) {
-            var $audioItem = $('.audio-item[data-id="' + audioId + '"]');
+            var $audioItem = $('#audio-list').find('.audio-item[data-id="' + audioId + '"]');
             var audioElement = $audioItem.find('.audio-element')[0];
 
             if (!audioElement) return;

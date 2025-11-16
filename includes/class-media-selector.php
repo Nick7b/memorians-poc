@@ -197,6 +197,7 @@ class Memorians_POC_Media_Selector {
         $all_images = $this->get_files_from_directory($this->images_dir, array('png', 'jpg', 'jpeg'));
         $all_videos = $this->get_files_from_directory($this->videos_dir, array('mp4', 'mov', 'avi'));
         $all_audio = $this->get_files_from_directory($this->audio_dir, array('mp3', 'wav', 'aac'));
+        $all_backgrounds = $this->get_files_from_directory($this->bg_images_dir, array('png', 'jpg', 'jpeg'));
 
         // Convert file paths to URLs and create structured data
         $images = array();
@@ -232,14 +233,27 @@ class Memorians_POC_Media_Selector {
             );
         }
 
+        $backgrounds = array();
+        foreach ($all_backgrounds as $index => $path) {
+            $filename = basename($path);
+            $backgrounds[] = array(
+                'id' => $filename,
+                'filename' => $filename,
+                'path' => $path,
+                'url' => $this->get_media_url($path)
+            );
+        }
+
         return array(
             'images' => $images,
             'videos' => $videos,
             'audio' => $audio,
+            'backgrounds' => $backgrounds,
             'requirements' => array(
                 'images' => array('min' => 15, 'max' => 40),
                 'videos' => array('min' => 1, 'max' => 5),
-                'audio' => array('min' => 1, 'max' => 1)
+                'audio' => array('min' => 1, 'max' => 1),
+                'background' => array('min' => 0, 'max' => 1)
             )
         );
     }
@@ -261,10 +275,11 @@ class Memorians_POC_Media_Selector {
      * @param array $image_ids Array of image filenames
      * @param array $video_ids Array of video filenames
      * @param string $audio_id Audio filename
+     * @param string $background_id Background image filename (optional)
      * @param string $template Template style
      * @return array|WP_Error Array of selected media or error
      */
-    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $template = 'classic') {
+    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id = null, $template = 'classic') {
         // Validate image count (min 15, max 40)
         $image_count = count($image_ids);
         if ($image_count < 15 || $image_count > 40) {
@@ -296,6 +311,11 @@ class Memorians_POC_Media_Selector {
             $valid_audio_ids[$aud['id']] = $aud['path'];
         }
 
+        $valid_background_ids = array();
+        foreach ($all_media['backgrounds'] as $bg) {
+            $valid_background_ids[$bg['id']] = $bg['path'];
+        }
+
         // Resolve image IDs to paths
         $selected_images = array();
         foreach ($image_ids as $img_id) {
@@ -320,13 +340,19 @@ class Memorians_POC_Media_Selector {
             $selected_audio = $valid_audio_ids[$audio_id];
         }
 
+        // Resolve background ID to path (optional)
+        $selected_background = null;
+        if (!empty($background_id) && isset($valid_background_ids[$background_id])) {
+            $selected_background = $valid_background_ids[$background_id];
+        }
+
         // Create compilation sequence
         $sequence = $this->create_sequence($selected_images, $selected_videos, $template);
 
         return array(
             'images' => $selected_images,
             'videos' => $selected_videos,
-            'bg_image' => null,
+            'bg_image' => $selected_background,
             'audio' => $selected_audio,
             'sequence' => $sequence,
             'template' => $template

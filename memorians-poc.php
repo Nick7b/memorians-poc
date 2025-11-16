@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MEMORIANS_POC_VERSION', '1.3.2');
+define('MEMORIANS_POC_VERSION', '1.4.0');
 define('MEMORIANS_POC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MEMORIANS_POC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MEMORIANS_POC_MEDIA_DIR', MEMORIANS_POC_PLUGIN_DIR . 'media/');
@@ -191,11 +191,14 @@ function memorians_poc_enqueue_assets() {
             MEMORIANS_POC_VERSION
         );
 
+        // Add timestamp for aggressive cache busting on mobile
+        $cache_buster = MEMORIANS_POC_VERSION . '.' . time();
+
         wp_enqueue_script(
             'memorians-poc-video-player',
             MEMORIANS_POC_PLUGIN_URL . 'assets/js/video-player.js',
             array('jquery'),
-            MEMORIANS_POC_VERSION,
+            $cache_buster,
             true
         );
 
