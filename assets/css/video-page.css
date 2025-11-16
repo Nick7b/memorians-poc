@@ -772,12 +772,21 @@ body.memorians-poc-page {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .background-item-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    position: relative;
+    z-index: 2;
+}
+
+/* Hide placeholder when image loads */
+.background-item .media-item-placeholder {
+    display: none !important;
 }
 
 .no-background-placeholder {
