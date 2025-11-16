@@ -80,7 +80,9 @@ try {
 
     // Generate appropriate thumbnail
     if ($media_type === 'image') {
+        error_log('Generating image thumbnail for: ' . $media_path . ' size: ' . $size);
         $result = $thumbnail_generator->generate_image_thumbnail($media_path, $size, $force);
+        error_log('Thumbnail generation result: ' . (is_wp_error($result) ? 'ERROR: ' . $result->get_error_message() : 'SUCCESS'));
     } elseif ($media_type === 'video') {
         // For regular videos, generate poster
         $timestamp = isset($_GET['timestamp']) ? floatval($_GET['timestamp']) : 1.0;
@@ -100,12 +102,14 @@ try {
     }
 
     // Return successful result
-    echo json_encode(array(
+    $response = array(
         'success' => true,
         'thumbnail' => $result,
         'media_type' => $media_type,
         'size' => $size
-    ));
+    );
+    error_log('Sending thumbnail response: ' . json_encode($response));
+    echo json_encode($response);
 
 } catch (Exception $e) {
     echo json_encode(array(

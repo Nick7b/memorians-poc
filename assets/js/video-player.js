@@ -848,10 +848,14 @@
                 var smallUrl = self.getThumbnailUrl(bg, 'small');
 
                 // For backgrounds, if no thumbnails exist yet, trigger generation
+                console.log('Background', bg.filename, 'thumbnails:', bg.thumbnails);
                 if (bg.thumbnails && bg.thumbnails.generate_on_demand) {
+                    console.log('Queueing thumbnail generation for background:', bg.filename);
                     // Use a more aggressive generation approach
                     self.queueThumbnailGeneration(bg.path, 'image', 'thumbnail');
                     self.queueThumbnailGeneration(bg.path, 'image', 'small');
+                } else {
+                    console.log('Not generating thumbnails for', bg.filename, '- thumbnails exist or not marked for generation');
                 }
 
                 backgroundHtml += '<div class="background-item" data-type="background" data-id="' + bg.id + '">';
@@ -2142,7 +2146,7 @@
 
         showGallery: function() {
             $('#video-gallery-panel').show();
-            $('#media-selection-panel').hide();
+            // Keep media selection panel visible (it's below gallery)
             $('#video-container').hide();
             $('#controls-panel').hide();
             $('#info-panel').hide();
@@ -2278,9 +2282,12 @@
                     size: size
                 },
                 success: function(response) {
+                    console.log('Thumbnail response for', mediaPath, ':', response);
                     if (response.success && response.thumbnail) {
                         // Update the image source if element still exists
                         self.updateThumbnailInDOM(mediaPath, response.thumbnail, mediaType);
+                    } else {
+                        console.error('Thumbnail generation failed:', response);
                     }
                 },
                 error: function(xhr, status, error) {
