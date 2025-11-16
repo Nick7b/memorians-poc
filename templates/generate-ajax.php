@@ -78,6 +78,9 @@ try {
         $image_ids = array_map('sanitize_text_field', $image_ids);
         $video_ids = array_map('sanitize_text_field', $video_ids);
 
+        // DEBUG: Log background parameter
+        error_log("generate-ajax.php: Received background_id = " . ($background_id ? $background_id : 'NULL'));
+
         $result = $generator->generate_with_selection($template, $image_ids, $video_ids, $audio_id, $background_id);
     } else {
         // This should not happen anymore, but keep as fallback

@@ -70,6 +70,9 @@ class Memorians_POC_Video_Generator {
             );
         }
 
+        // DEBUG: Log background in media array
+        error_log("class-video-generator.php generate_with_selection: bg_image = " . (isset($media['bg_image']) && $media['bg_image'] ? $media['bg_image'] : 'NULL'));
+
         // Set status to generating with cache_key and selection
         $this->cache_manager->set_generation_status($template, 'generating', array(
             'start_time' => time(),
@@ -301,7 +304,16 @@ class Memorians_POC_Video_Generator {
                 // settb=AVTB uses automatic video timebase for proper synchronization
                 // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
                 $ken_burns = $this->media_selector->get_ken_burns_effect($seq_index, $template, $frame_count);
-                $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+
+                // If we have a background, create transparent padding instead of black
+                if (!empty($media['bg_image'])) {
+                    // Scale image maintaining aspect ratio and add transparent padding
+                    // This ensures images stay the same size as without background
+                    $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x00000000,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
+                } else {
+                    // No background - use black padding as before
+                    $filter_complex[] = "[{$input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,{$ken_burns},setpts=PTS-STARTPTS,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                }
 
                 $input_index++;
             } else {
@@ -316,7 +328,16 @@ class Memorians_POC_Video_Generator {
                 // 5. All other filters normalize resolution and format for xfade compatibility
                 // This approach works for videos of ANY duration - we just take the first N frames
                 // Mobile-optimized: 1080x1920 portrait orientation for full-screen mobile viewing
-                $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+
+                // If we have a background, create transparent padding instead of black
+                if (!empty($media['bg_image'])) {
+                    // Scale video maintaining aspect ratio and add transparent padding
+                    // This ensures videos stay the same size as without background
+                    $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x00000000,settb=AVTB,setsar=1,format=yuva420p[v{$seq_index}]";
+                } else {
+                    // No background - use black padding as before
+                    $filter_complex[] = "[{$input_index}:v]fps=30,setpts=PTS-STARTPTS,select='lt(n,{$frame_count})',setpts=N/(30*TB),scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,settb=AVTB,setsar=1,format=yuv420p[v{$seq_index}]";
+                }
 
                 // Video audio is ignored - we only use background music
                 $input_index++;
@@ -325,17 +346,26 @@ class Memorians_POC_Video_Generator {
 
         // Add background image input if provided
         $bg_input_index = null;
-        if (!empty($media['bg_image']) && file_exists($media['bg_image'])) {
-            $bg_input_index = $input_index;
-            // Loop the background image for the entire duration, set framerate to 30fps
-            $inputs[] = "-loop 1 -framerate 30 -t {$total_duration} -i " . escapeshellarg($media['bg_image']);
-            $input_index++;
+        if (!empty($media['bg_image'])) {
+            error_log("DEBUG: Checking background image: " . $media['bg_image']);
+            error_log("DEBUG: File exists: " . (file_exists($media['bg_image']) ? 'YES' : 'NO'));
 
-            // Scale and prepare background to match output dimensions
-            // Scale to fit 1080x1920, then ensure it fills the frame
-            $filter_complex[] = "[{$bg_input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,format=yuv420p[bg]";
+            if (file_exists($media['bg_image'])) {
+                $bg_input_index = $input_index;
+                // Loop the background image for the entire duration, set framerate to 30fps
+                $inputs[] = "-loop 1 -framerate 30 -t {$total_duration} -i " . escapeshellarg($media['bg_image']);
+                $input_index++;
 
-            error_log("Background image added: " . basename($media['bg_image']));
+                // Scale and prepare background to match output dimensions
+                // Scale to fit 1080x1920, then ensure it fills the frame
+                $filter_complex[] = "[{$bg_input_index}:v]fps=30,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,format=yuv420p[bg]";
+
+                error_log("Background image added: " . basename($media['bg_image']) . " at input index {$bg_input_index}");
+            } else {
+                error_log("ERROR: Background image file does not exist: " . $media['bg_image']);
+            }
+        } else {
+            error_log("DEBUG: No background image provided (empty or null)");
         }
 
         // Add background audio input - limit to video duration
@@ -398,6 +428,11 @@ class Memorians_POC_Video_Generator {
         $inputs_str = implode(' ', $inputs);
         $filter_str = implode('; ', $filter_complex);
 
+        // DEBUG: Log filter complex for analysis
+        error_log("DEBUG: Filter complex has " . count($filter_complex) . " parts");
+        error_log("DEBUG: Background input index: " . ($bg_input_index !== null ? $bg_input_index : 'NULL'));
+        error_log("DEBUG: Filter complex:\n" . $filter_str);
+
         // Mobile-optimized encoding settings for portrait video (1080x1920)
         // -f mp4 explicitly sets MP4 muxer format
         // -profile:v baseline -level 4.0 uses most compatible H.264 settings for all mobile devices
@@ -412,6 +447,9 @@ class Memorians_POC_Video_Generator {
         // -movflags +faststart relocates metadata to beginning for instant mobile streaming
         // -stats_period 0.5 outputs progress stats every 0.5 seconds
         $command = "ffmpeg -y -stats_period 0.5 {$inputs_str} -filter_complex \"{$filter_str}\" -map \"[vout]\" -map \"[aout]\" -t {$total_duration} -shortest -c:v libx264 -profile:v baseline -level 4.0 -preset medium -crf 23 -g 60 -bf 2 -pix_fmt yuv420p -c:a aac -b:a 192k -ar 48000 -f mp4 -movflags +faststart " . escapeshellarg($output_path);
+
+        // DEBUG: Log full command
+        error_log("DEBUG: Full FFmpeg command:\n" . $command);
 
         return $command;
     }
