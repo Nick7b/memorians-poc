@@ -98,6 +98,23 @@
 
         // Gallery data
         videoGallery: [],
+
+        // Template transition defaults
+        templateTransitions: {
+            classic: ['fade', 'dissolve', 'smoothleft', 'smoothright'],
+            modern: ['smoothleft', 'smoothright', 'circleopen', 'circleclose', 'pixelize'],
+            elegant: ['fade', 'fadeblack', 'fadewhite', 'dissolve', 'circleopen', 'circleclose']
+        },
+
+        // All Ken Burns patterns available
+        allKenBurnsPatterns: ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'pan_tl', 'pan_br', 'pan_up', 'pan_down'],
+
+        // Advanced options state
+        advancedOptions: {
+            overrideDefaults: false,
+            selectedTransitions: [],
+            selectedKenBurns: []
+        },
         currentVideo: null,
 
         // Preview tracking
@@ -128,6 +145,8 @@
             this.initializeSettings();
             // Apply Classic Memorial preset by default
             this.applyPreset('classic');
+            // Initialize Advanced Options
+            this.initializeAdvancedOptions();
             this.loadVideoGallery(); // Start by loading gallery
         },
 
@@ -384,6 +403,144 @@
             });
 
             console.log('Settings initialized');
+        },
+
+        initializeAdvancedOptions: function() {
+            var self = this;
+
+            // Advanced Options section expand/collapse
+            $('#advanced-header').on('click', function() {
+                var $header = $(this);
+                var $content = $('#advanced-content');
+
+                if ($content.is(':visible')) {
+                    $content.slideUp(300);
+                    $header.removeClass('expanded');
+                } else {
+                    $content.slideDown(300);
+                    $header.addClass('expanded');
+                }
+            });
+
+            // Override defaults toggle
+            $('#override-defaults').on('change', function() {
+                var isOverride = $(this).prop('checked');
+                self.advancedOptions.overrideDefaults = isOverride;
+
+                if (isOverride) {
+                    $('#advanced-status-text').text('Custom Selection');
+                    $('.transitions-group, .kenburns-group').removeClass('disabled');
+                    $('.transition-checkbox, .kenburns-checkbox').prop('disabled', false);
+                } else {
+                    $('#advanced-status-text').text('Template Defaults');
+                    $('.transitions-group, .kenburns-group').addClass('disabled');
+                    $('.transition-checkbox, .kenburns-checkbox').prop('disabled', true);
+                    // Reapply template defaults
+                    self.updateTransitionCheckboxes();
+                }
+            });
+
+            // Transition checkbox changes
+            $('.transition-checkbox').on('change', function() {
+                if (self.advancedOptions.overrideDefaults) {
+                    self.updateSelectedTransitions();
+                }
+            });
+
+            // Ken Burns checkbox changes
+            $('.kenburns-checkbox').on('change', function() {
+                if (self.advancedOptions.overrideDefaults) {
+                    self.updateSelectedKenBurns();
+                }
+            });
+
+            // Quick action buttons
+            $('#select-all-transitions').on('click', function(e) {
+                e.preventDefault();
+                if (self.advancedOptions.overrideDefaults) {
+                    $('.transition-checkbox').prop('checked', true);
+                    self.updateSelectedTransitions();
+                }
+            });
+
+            $('#clear-all-transitions').on('click', function(e) {
+                e.preventDefault();
+                if (self.advancedOptions.overrideDefaults) {
+                    $('.transition-checkbox').prop('checked', false);
+                    self.updateSelectedTransitions();
+                }
+            });
+
+            $('#select-all-kenburns').on('click', function(e) {
+                e.preventDefault();
+                if (self.advancedOptions.overrideDefaults) {
+                    $('.kenburns-checkbox').prop('checked', true);
+                    self.updateSelectedKenBurns();
+                }
+            });
+
+            $('#clear-all-kenburns').on('click', function(e) {
+                e.preventDefault();
+                if (self.advancedOptions.overrideDefaults) {
+                    $('.kenburns-checkbox').prop('checked', false);
+                    self.updateSelectedKenBurns();
+                }
+            });
+
+            // Template style change - update Advanced Options
+            $('#template-style-selection').on('change.advanced', function() {
+                if (!self.advancedOptions.overrideDefaults) {
+                    self.updateTransitionCheckboxes();
+                }
+            });
+
+            // Initialize with template defaults
+            this.updateTransitionCheckboxes();
+
+            // By default, select all Ken Burns patterns
+            $('.kenburns-checkbox').prop('checked', true);
+            this.updateSelectedKenBurns();
+
+            // Start with checkboxes disabled (not overriding)
+            $('.transitions-group, .kenburns-group').addClass('disabled');
+            $('.transition-checkbox, .kenburns-checkbox').prop('disabled', true);
+
+            console.log('Advanced Options initialized');
+        },
+
+        updateTransitionCheckboxes: function() {
+            var template = $('#template-style-selection').val() || 'classic';
+            var transitions = this.templateTransitions[template] || this.templateTransitions['classic'];
+
+            // Uncheck all first
+            $('.transition-checkbox').prop('checked', false);
+
+            // Check template defaults
+            transitions.forEach(function(transition) {
+                $('#trans-' + transition).prop('checked', true);
+            });
+
+            this.updateSelectedTransitions();
+        },
+
+        updateSelectedTransitions: function() {
+            var selected = [];
+            $('.transition-checkbox:checked').each(function() {
+                selected.push($(this).val());
+            });
+
+            this.advancedOptions.selectedTransitions = selected;
+            $('#transition-count').text('(' + selected.length + ' selected)');
+        },
+
+        updateSelectedKenBurns: function() {
+            var selected = [];
+            $('.kenburns-checkbox:checked').each(function() {
+                selected.push($(this).val());
+            });
+
+            this.advancedOptions.selectedKenBurns = selected;
+            $('#kenburns-count').text('(' + selected.length + ' selected)');
         },
 
         applyPreset: function(presetName) {
@@ -1002,7 +1159,25 @@
             params['settings[musicVolume]'] = this.settings.musicVolume;
             params['settings[audioFade]'] = this.settings.audioFade ? '1' : '0';
 
+            // Add Advanced Options if override is enabled
+            if (this.advancedOptions.overrideDefaults) {
+                params['advancedOptions[overrideDefaults]'] = '1';
+
+                // Add custom transitions
+                $.each(this.advancedOptions.selectedTransitions, function(index, transition) {
+                    params['advancedOptions[transitions][' + index + ']'] = transition;
+                });
+
+                // Add custom Ken Burns patterns
+                $.each(this.advancedOptions.selectedKenBurns, function(index, pattern) {
+                    params['advancedOptions[kenBurns][' + index + ']'] = pattern;
+                });
+            } else {
+                params['advancedOptions[overrideDefaults]'] = '0';
+            }
+
             console.log('Sending settings:', this.settings);
+            console.log('Sending advanced options:', this.advancedOptions);
 
             $.ajax({
                 url: memoriansPoC.generateUrl,

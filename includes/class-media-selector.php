@@ -10,6 +10,7 @@ class Memorians_POC_Media_Selector {
     private $videos_dir;
     private $bg_images_dir;
     private $audio_dir;
+    private $settings = array();
 
     public function __construct() {
         $this->images_dir = MEMORIANS_POC_MEDIA_DIR . 'images/';
@@ -279,7 +280,9 @@ class Memorians_POC_Media_Selector {
      * @param string $template Template style
      * @return array|WP_Error Array of selected media or error
      */
-    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id = null, $template = 'classic', $image_duration = 4) {
+    public function select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id = null, $template = 'classic', $image_duration = 4, $settings = array()) {
+        // Store settings for use in Ken Burns effect
+        $this->settings = $settings;
         // Validate image count (min 15, max 40)
         $image_count = count($image_ids);
         if ($image_count < 15 || $image_count > 40) {
@@ -411,6 +414,36 @@ class Memorians_POC_Media_Selector {
             "zoompan=z='min(zoom+{$zoom_speed_4},{$max_zoom_4})':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*0.3*in/{$frame_count})':d={$frame_count}:s=1080x1920:fps={$frame_rate}"
         );
 
+        // Check if custom Ken Burns patterns are specified in settings
+        if (isset($this->settings['advancedOptions']) && isset($this->settings['advancedOptions']['kenBurns']) && !empty($this->settings['advancedOptions']['kenBurns'])) {
+            $custom_patterns = $this->settings['advancedOptions']['kenBurns'];
+
+            // Map pattern names to indices
+            $pattern_map = array(
+                'zoom_in' => 0,
+                'zoom_out' => 1,
+                'pan_left' => 2,
+                'pan_right' => 3,
+                'pan_tl' => 4,    // top-left diagonal
+                'pan_br' => 5,    // bottom-right diagonal
+                'pan_up' => 6,
+                'pan_down' => 7
+            );
+
+            // Build filtered patterns array based on custom selection
+            $filtered_patterns = array();
+            foreach ($custom_patterns as $pattern_name) {
+                if (isset($pattern_map[$pattern_name])) {
+                    $filtered_patterns[] = $patterns[$pattern_map[$pattern_name]];
+                }
+            }
+
+            // Use filtered patterns if any were selected
+            if (!empty($filtered_patterns)) {
+                return $filtered_patterns[$index % count($filtered_patterns)];
+            }
+        }
+
         // Select pattern based on index (cycling through patterns)
         return $patterns[$index % count($patterns)];
     }
@@ -419,9 +452,16 @@ class Memorians_POC_Media_Selector {
      * Get transition effect based on template
      *
      * @param string $template Template style
+     * @param array $custom_transitions Optional custom transitions to use
      * @return string Transition name
      */
-    public function get_transition($template = 'classic') {
+    public function get_transition($template = 'classic', $custom_transitions = null) {
+        // If custom transitions are provided, use those
+        if (!empty($custom_transitions) && is_array($custom_transitions)) {
+            return $custom_transitions[array_rand($custom_transitions)];
+        }
+
+        // Otherwise use template defaults
         $transitions = array(
             'classic' => array('fade', 'dissolve', 'smoothleft', 'smoothright'),
             'modern' => array('smoothleft', 'smoothright', 'circleopen', 'circleclose', 'pixelize'),

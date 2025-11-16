@@ -85,9 +85,9 @@ class Memorians_POC_Video_Generator {
             );
         }
 
-        // Select media by IDs (pass image duration from settings)
+        // Select media by IDs (pass image duration and all settings)
         $image_duration = isset($this->settings['imageDuration']) ? $this->settings['imageDuration'] : 4;
-        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id, $template, $image_duration);
+        $media = $this->media_selector->select_media_by_ids($image_ids, $video_ids, $audio_id, $background_id, $template, $image_duration, $this->settings);
         if (is_wp_error($media)) {
             return array(
                 'success' => false,
@@ -437,7 +437,12 @@ class Memorians_POC_Video_Generator {
         $offset = $media['sequence'][0]['duration'] ?? 4;
 
         for ($i = 1; $i < count($media['sequence']); $i++) {
-            $transition = $this->media_selector->get_transition($template);
+            // Get custom transitions if provided
+            $custom_transitions = null;
+            if (isset($this->settings['advancedOptions']) && isset($this->settings['advancedOptions']['transitions']) && !empty($this->settings['advancedOptions']['transitions'])) {
+                $custom_transitions = $this->settings['advancedOptions']['transitions'];
+            }
+            $transition = $this->media_selector->get_transition($template, $custom_transitions);
             // If this is the last transition and we have a background, output to a temp label for compositing
             $next_label = ($i < count($media['sequence']) - 1) ? "vt{$i}" : ($bg_input_index !== null ? "vfg" : "vout");
 

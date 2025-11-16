@@ -105,6 +105,170 @@ $force_reload = time();
             </div>
         </div>
 
+        <!-- Advanced Options Section -->
+        <div class="media-section advanced-options-section">
+            <div class="advanced-header" id="advanced-header">
+                <h3>
+                    <span class="header-text">Advanced Options</span>
+                    <span class="header-icon">▼</span>
+                </h3>
+                <p class="advanced-status">Using: <strong id="advanced-status-text">Template Defaults</strong></p>
+            </div>
+
+            <div class="advanced-content" id="advanced-content" style="display: none;">
+                <!-- Override Mode Toggle -->
+                <div class="advanced-group override-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="override-defaults" class="override-checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                    <label for="override-defaults" class="override-label">Override Template Defaults</label>
+                    <p class="settings-hint">Enable custom selection of transitions and effects</p>
+                </div>
+
+                <!-- Transitions Selection -->
+                <div class="advanced-group transitions-group" id="transitions-group">
+                    <h4>Transitions <span class="selection-count" id="transition-count">(0 selected)</span></h4>
+                    <p class="settings-hint">Select which transitions to use between media</p>
+                    <div class="checkbox-grid transitions-grid">
+                        <!-- Basic Transitions -->
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-fade" class="transition-checkbox" value="fade" data-group="basic">
+                            <label for="trans-fade">Fade</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-dissolve" class="transition-checkbox" value="dissolve" data-group="basic">
+                            <label for="trans-dissolve">Dissolve</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-fadeblack" class="transition-checkbox" value="fadeblack" data-group="basic">
+                            <label for="trans-fadeblack">Fade Black</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-fadewhite" class="transition-checkbox" value="fadewhite" data-group="basic">
+                            <label for="trans-fadewhite">Fade White</label>
+                        </div>
+
+                        <!-- Smooth Transitions -->
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-smoothleft" class="transition-checkbox" value="smoothleft" data-group="smooth">
+                            <label for="trans-smoothleft">Smooth Left</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-smoothright" class="transition-checkbox" value="smoothright" data-group="smooth">
+                            <label for="trans-smoothright">Smooth Right</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-smoothup" class="transition-checkbox" value="smoothup" data-group="smooth">
+                            <label for="trans-smoothup">Smooth Up</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-smoothdown" class="transition-checkbox" value="smoothdown" data-group="smooth">
+                            <label for="trans-smoothdown">Smooth Down</label>
+                        </div>
+
+                        <!-- Geometric Transitions -->
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-circleopen" class="transition-checkbox" value="circleopen" data-group="geometric">
+                            <label for="trans-circleopen">Circle Open</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-circleclose" class="transition-checkbox" value="circleclose" data-group="geometric">
+                            <label for="trans-circleclose">Circle Close</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-pixelize" class="transition-checkbox" value="pixelize" data-group="geometric">
+                            <label for="trans-pixelize">Pixelize</label>
+                        </div>
+
+                        <!-- Wipe Transitions -->
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-wipeleft" class="transition-checkbox" value="wipeleft" data-group="wipe">
+                            <label for="trans-wipeleft">Wipe Left</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-wiperight" class="transition-checkbox" value="wiperight" data-group="wipe">
+                            <label for="trans-wiperight">Wipe Right</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-wipeup" class="transition-checkbox" value="wipeup" data-group="wipe">
+                            <label for="trans-wipeup">Wipe Up</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-wipedown" class="transition-checkbox" value="wipedown" data-group="wipe">
+                            <label for="trans-wipedown">Wipe Down</label>
+                        </div>
+
+                        <!-- Slide Transitions -->
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-slideleft" class="transition-checkbox" value="slideleft" data-group="slide">
+                            <label for="trans-slideleft">Slide Left</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-slideright" class="transition-checkbox" value="slideright" data-group="slide">
+                            <label for="trans-slideright">Slide Right</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-slideup" class="transition-checkbox" value="slideup" data-group="slide">
+                            <label for="trans-slideup">Slide Up</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="trans-slidedown" class="transition-checkbox" value="slidedown" data-group="slide">
+                            <label for="trans-slidedown">Slide Down</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ken Burns Patterns Selection -->
+                <div class="advanced-group kenburns-group" id="kenburns-group">
+                    <h4>Ken Burns Patterns <span class="selection-count" id="kenburns-count">(0 selected)</span></h4>
+                    <p class="settings-hint">Select zoom and pan patterns for images</p>
+                    <div class="checkbox-grid kenburns-grid">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-zoomin" class="kenburns-checkbox" value="zoom_in">
+                            <label for="kb-zoomin">Zoom In</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-zoomout" class="kenburns-checkbox" value="zoom_out">
+                            <label for="kb-zoomout">Zoom Out</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-panleft" class="kenburns-checkbox" value="pan_left">
+                            <label for="kb-panleft">Pan Left</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-panright" class="kenburns-checkbox" value="pan_right">
+                            <label for="kb-panright">Pan Right</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-pantl" class="kenburns-checkbox" value="pan_tl">
+                            <label for="kb-pantl">Diagonal Top-Left</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-panbr" class="kenburns-checkbox" value="pan_br">
+                            <label for="kb-panbr">Diagonal Bottom-Right</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-panup" class="kenburns-checkbox" value="pan_up">
+                            <label for="kb-panup">Pan Up</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="kb-pandown" class="kenburns-checkbox" value="pan_down">
+                            <label for="kb-pandown">Pan Down</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="advanced-group quick-actions">
+                    <button id="select-all-transitions" class="button button-small">Select All Transitions</button>
+                    <button id="clear-all-transitions" class="button button-small">Clear All Transitions</button>
+                    <button id="select-all-kenburns" class="button button-small">Select All Ken Burns</button>
+                    <button id="clear-all-kenburns" class="button button-small">Clear All Ken Burns</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Section -->
         <div class="media-section settings-section">
             <div class="settings-header" id="settings-header">

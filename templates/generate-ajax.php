@@ -98,6 +98,22 @@ try {
             );
         }
 
+        // Get Advanced Options if provided
+        if (isset($_GET['advancedOptions']) && is_array($_GET['advancedOptions'])) {
+            if (isset($_GET['advancedOptions']['overrideDefaults']) && $_GET['advancedOptions']['overrideDefaults'] === '1') {
+                $advancedOptions = array(
+                    'overrideDefaults' => true,
+                    'transitions' => isset($_GET['advancedOptions']['transitions']) ? array_map('sanitize_text_field', $_GET['advancedOptions']['transitions']) : array(),
+                    'kenBurns' => isset($_GET['advancedOptions']['kenBurns']) ? array_map('sanitize_text_field', $_GET['advancedOptions']['kenBurns']) : array()
+                );
+
+                // Add advanced options to settings array for passing to generator
+                $settings['advancedOptions'] = $advancedOptions;
+
+                error_log("generate-ajax.php: Received advanced options = " . json_encode($advancedOptions));
+            }
+        }
+
         // DEBUG: Log settings
         error_log("generate-ajax.php: Received settings = " . json_encode($settings));
         error_log("generate-ajax.php: Received background_id = " . ($background_id ? $background_id : 'NULL'));
