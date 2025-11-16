@@ -41,7 +41,7 @@ $force_reload = time();
     </div>
 
     <!-- Media Selection Panel -->
-    <div id="media-selection-panel" class="media-selection-panel" style="display: none;">
+    <div id="media-selection-panel" class="media-selection-panel">
         <h2>Generate Video</h2>
 
         <!-- Selection Summary -->

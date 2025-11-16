@@ -1169,10 +1169,14 @@
         },
 
         showMediaSelection: function() {
+            // Panel is already visible from start, just ensure visibility
             $('#media-selection-panel').show();
             $('#video-container').hide();
             $('#controls-panel').hide();
             $('#info-panel').hide();
+
+            // Remove any loading placeholders
+            $('.loading-placeholder').remove();
 
             // Update template description to match current selection
             this.updateTemplateDescription(this.currentTemplate);
@@ -2303,12 +2307,28 @@
             var filename = mediaPath.split('/').pop();
 
             if (mediaType === 'image') {
-                var $img = $('.media-item[data-id="' + filename + '"] img');
-                if ($img.length && thumbnailData.url) {
-                    $img.attr('src', thumbnailData.url);
-                    if (thumbnailData.webp_url) {
-                        $img.closest('picture').find('source[type="image/webp"]').attr('srcset',
-                            thumbnailData.webp_url + ' 1x, ' + thumbnailData.webp_url + ' 2x');
+                // Check if it's a background image
+                var isBackground = mediaPath.indexOf('/bg_images/') !== -1;
+
+                if (isBackground) {
+                    // Update background image thumbnail
+                    var $bgImg = $('.background-item[data-id="' + filename + '"] img');
+                    if ($bgImg.length && thumbnailData.url) {
+                        console.log('Updating background thumbnail for', filename, 'to', thumbnailData.url);
+                        $bgImg.attr('src', thumbnailData.url);
+                        $bgImg.removeClass('lazy-load').addClass('loaded');
+                        // Hide the placeholder
+                        $bgImg.siblings('.media-item-placeholder').fadeOut();
+                    }
+                } else {
+                    // Update regular media image
+                    var $img = $('.media-item[data-id="' + filename + '"] img');
+                    if ($img.length && thumbnailData.url) {
+                        $img.attr('src', thumbnailData.url);
+                        if (thumbnailData.webp_url) {
+                            $img.closest('picture').find('source[type="image/webp"]').attr('srcset',
+                                thumbnailData.webp_url + ' 1x, ' + thumbnailData.webp_url + ' 2x');
+                        }
                     }
                 }
             } else if (mediaType === 'video') {
