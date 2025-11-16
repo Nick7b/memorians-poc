@@ -2008,3 +2008,291 @@ input:checked + .slider:before {
         align-items: flex-start;
     }
 }
+
+/* =================================== */
+/* Thumbnail and Lazy Loading Styles  */
+/* =================================== */
+
+/* Media Item Placeholder */
+.media-item-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #f0f0f0 25%, #f8f8f8 25%, #f8f8f8 50%, #f0f0f0 50%, #f0f0f0 75%, #f8f8f8 75%, #f8f8f8);
+    background-size: 20px 20px;
+    animation: shimmer 1.5s infinite linear;
+    z-index: 1;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 20px 20px;
+    }
+}
+
+/* Picture Element Container */
+.media-item-picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Lazy Loading Images */
+.media-item-img,
+.video-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+/* Loading State */
+.lazy-load {
+    opacity: 0;
+    filter: blur(5px);
+}
+
+.lazy-load.loading {
+    opacity: 0.5;
+    filter: blur(3px);
+}
+
+.lazy-load.loaded {
+    opacity: 1;
+    filter: blur(0);
+}
+
+/* Error State */
+.lazy-load.error {
+    opacity: 1;
+    filter: grayscale(1);
+}
+
+/* Video Poster Specific */
+.video-item-preview {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+    background: #f0f0f0;
+}
+
+.video-poster {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.video-item:hover .video-poster {
+    transform: scale(1.05);
+}
+
+/* Play Button Overlay for Video Posters */
+.video-poster::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: none;
+    pointer-events: none;
+}
+
+.video-poster::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-40%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 18px solid white;
+    z-index: 1;
+    display: none;
+    pointer-events: none;
+}
+
+.video-item-preview:hover .video-poster::after,
+.video-item-preview:hover .video-poster::before {
+    display: block;
+}
+
+/* Responsive Images */
+picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Gallery Grid Optimizations */
+.gallery-grid .gallery-item {
+    position: relative;
+    overflow: hidden;
+    background: #f8f8f8;
+}
+
+.gallery-grid .gallery-item img,
+.gallery-grid .gallery-item video {
+    transition: opacity 0.3s ease;
+}
+
+/* Generated Video Thumbnails */
+.gallery-video-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.gallery-video-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.gallery-video-container:hover .gallery-video-poster {
+    opacity: 0.8;
+}
+
+/* Video Play Overlay */
+.video-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.video-play-overlay::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-bottom: 16px solid transparent;
+    border-left: 24px solid white;
+    margin-left: 4px;
+}
+
+.gallery-video-container:hover .video-play-overlay {
+    background: rgba(0, 0, 0, 0.8);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Loading Spinner for Thumbnail Generation */
+.thumbnail-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 3;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Blur-up Effect */
+.blur-up {
+    filter: blur(5px);
+    transition: filter 400ms;
+}
+
+.blur-up.loaded {
+    filter: blur(0);
+}
+
+/* Performance Optimizations */
+.media-grid,
+.gallery-grid {
+    will-change: transform;
+}
+
+.media-item img,
+.video-poster,
+.gallery-video-poster {
+    will-change: opacity, transform;
+}
+
+/* Disable animations for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .lazy-load,
+    .media-item-img,
+    .video-poster,
+    .gallery-video-poster {
+        transition: none;
+    }
+
+    .media-item-placeholder {
+        animation: none;
+        background: #f0f0f0;
+    }
+
+    .thumbnail-loading {
+        animation: none;
+    }
+}
+
+/* High DPI Display Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .media-item-img,
+    .video-poster {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Background Image Thumbnails */
+.background-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.background-item img {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.background-item.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%);
+    animation: shimmer 1.5s infinite;
+    z-index: 1;
+}

@@ -200,27 +200,47 @@ class Memorians_POC_Media_Selector {
         $all_audio = $this->get_files_from_directory($this->audio_dir, array('mp3', 'wav', 'aac'));
         $all_backgrounds = $this->get_files_from_directory($this->bg_images_dir, array('png', 'jpg', 'jpeg'));
 
+        // Initialize thumbnail generator for checking existing thumbnails
+        $thumbnail_generator = null;
+        if (class_exists('Memorians_POC_Thumbnail_Generator')) {
+            $thumbnail_generator = new Memorians_POC_Thumbnail_Generator();
+        }
+
         // Convert file paths to URLs and create structured data
         $images = array();
         foreach ($all_images as $index => $path) {
             $filename = basename($path);
-            $images[] = array(
+            $image_data = array(
                 'id' => $filename,
                 'filename' => $filename,
                 'path' => $path,
                 'url' => $this->get_media_url($path)
             );
+
+            // Add thumbnail URLs if available
+            if ($thumbnail_generator) {
+                $image_data['thumbnails'] = $this->get_thumbnail_urls($path, 'image', $thumbnail_generator);
+            }
+
+            $images[] = $image_data;
         }
 
         $videos = array();
         foreach ($all_videos as $index => $path) {
             $filename = basename($path);
-            $videos[] = array(
+            $video_data = array(
                 'id' => $filename,
                 'filename' => $filename,
                 'path' => $path,
                 'url' => $this->get_media_url($path)
             );
+
+            // Add poster URLs if available
+            if ($thumbnail_generator) {
+                $video_data['posters'] = $this->get_thumbnail_urls($path, 'video', $thumbnail_generator);
+            }
+
+            $videos[] = $video_data;
         }
 
         $audio = array();
@@ -237,12 +257,19 @@ class Memorians_POC_Media_Selector {
         $backgrounds = array();
         foreach ($all_backgrounds as $index => $path) {
             $filename = basename($path);
-            $backgrounds[] = array(
+            $bg_data = array(
                 'id' => $filename,
                 'filename' => $filename,
                 'path' => $path,
                 'url' => $this->get_media_url($path)
             );
+
+            // Add thumbnail URLs for background images
+            if ($thumbnail_generator) {
+                $bg_data['thumbnails'] = $this->get_thumbnail_urls($path, 'image', $thumbnail_generator);
+            }
+
+            $backgrounds[] = $bg_data;
         }
 
         return array(
@@ -257,6 +284,39 @@ class Memorians_POC_Media_Selector {
                 'background' => array('min' => 0, 'max' => 1)
             )
         );
+    }
+
+    /**
+     * Get thumbnail URLs for a media item
+     *
+     * @param string $path Media file path
+     * @param string $type 'image' or 'video'
+     * @param object $thumbnail_generator Thumbnail generator instance
+     * @return array Array of thumbnail URLs or empty array if not available
+     */
+    private function get_thumbnail_urls($path, $type, $thumbnail_generator) {
+        $thumbnails = array();
+        $sizes = array('thumbnail', 'small', 'medium', 'large');
+
+        foreach ($sizes as $size) {
+            // Check if thumbnail exists (don't generate here, just check)
+            $method = ($type === 'image') ? 'generate_image_thumbnail' : 'generate_video_poster';
+            $thumb_data = $thumbnail_generator->$method($path, $size, false);
+
+            if (!is_wp_error($thumb_data)) {
+                $thumbnails[$size] = $thumb_data['url'];
+                if (isset($thumb_data['webp_url'])) {
+                    $thumbnails[$size . '_webp'] = $thumb_data['webp_url'];
+                }
+            }
+        }
+
+        // If no thumbnails exist, return indicator to generate on demand
+        if (empty($thumbnails)) {
+            return array('generate_on_demand' => true);
+        }
+
+        return $thumbnails;
     }
 
     /**

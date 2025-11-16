@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('MEMORIANS_POC_VERSION', '1.5.3');
+define('MEMORIANS_POC_VERSION', '1.9.0');
 define('MEMORIANS_POC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MEMORIANS_POC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MEMORIANS_POC_MEDIA_DIR', MEMORIANS_POC_PLUGIN_DIR . 'media/');
@@ -129,6 +129,12 @@ function memorians_poc_rewrite_rules() {
         'top'
     );
 
+    add_rewrite_rule(
+        '^ffmpeg-poc/thumbnail/?$',
+        'index.php?memorians_poc_page=thumbnail',
+        'top'
+    );
+
     add_rewrite_tag('%memorians_poc_page%', '([^&]+)');
 }
 add_action('init', 'memorians_poc_rewrite_rules');
@@ -174,6 +180,10 @@ function memorians_poc_template_redirect() {
 
         case 'video_history':
             include MEMORIANS_POC_PLUGIN_DIR . 'templates/video-history-ajax.php';
+            exit;
+
+        case 'thumbnail':
+            include MEMORIANS_POC_PLUGIN_DIR . 'templates/thumbnail-ajax.php';
             exit;
     }
 }

@@ -764,14 +764,34 @@ class Memorians_POC_Video_Generator {
         if ($process_finished) {
             // Check if video was created successfully
             if (file_exists($output_path) && filesize($output_path) > 0) {
+                // Generate poster images for the video
+                $posters = array();
+                if (class_exists('Memorians_POC_Thumbnail_Generator')) {
+                    try {
+                        $thumbnail_generator = new Memorians_POC_Thumbnail_Generator();
+                        $posters = $thumbnail_generator->generate_video_posters($output_path);
+                        error_log('Generated posters for video: ' . json_encode($posters));
+                    } catch (Exception $e) {
+                        error_log('Failed to generate posters: ' . $e->getMessage());
+                    }
+                }
+
                 // Success - update status to completed
                 $this->cache_manager->set_generation_status($template, 'completed', array(
                     'cache_key' => $cache_key,
                     'video_path' => $output_path,
                     'video_url' => $this->cache_manager->get_video_url($output_path),
+                    'posters' => $posters,
                     'completion_time' => time(),
                     'file_size' => filesize($output_path)
                 ));
+
+                // Also update the metadata file with poster information
+                $metadata = $this->cache_manager->load_metadata($cache_key);
+                if ($metadata) {
+                    $metadata['posters'] = $posters;
+                    $this->cache_manager->save_metadata($cache_key, $metadata);
+                }
 
                 // Clean up PID file and shell script
                 @unlink($pid_file);
@@ -783,7 +803,8 @@ class Memorians_POC_Video_Generator {
                 return array(
                     'status' => 'completed',
                     'progress' => 100,
-                    'video_url' => $this->cache_manager->get_video_url($output_path)
+                    'video_url' => $this->cache_manager->get_video_url($output_path),
+                    'posters' => $posters
                 );
             } else {
                 // Failed - video not created

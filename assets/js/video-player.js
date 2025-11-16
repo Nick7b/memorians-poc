@@ -718,6 +718,7 @@
                         self.selectedAudio = [];
 
                         self.renderMediaGrid();
+                        self.initLazyLoading(); // Initialize lazy loading after rendering
                         self.showMediaSelection();
                     } else {
                         var errorMsg = 'Unknown error';
@@ -740,38 +741,78 @@
 
         renderMediaGrid: function() {
             var self = this;
-            console.log('renderMediaGrid called');
+            console.log('renderMediaGrid called with thumbnail support');
 
-            // Render images with onclick for Safari compatibility
+            // Render images with thumbnails and lazy loading
             var imagesHtml = '';
             $.each(this.mediaLibrary.images, function(index, image) {
-                // Add onclick="void(0)" for better Safari event delegation support
-                imagesHtml += '<div class="media-item" data-type="image" data-id="' + image.id + '" onclick="void(0)">';
-                imagesHtml += '<img src="' + image.url + '" alt="' + image.filename + '">';
+                // Get thumbnail URL or use full image as fallback
+                var thumbnailUrl = self.getThumbnailUrl(image, 'thumbnail');
+                var smallUrl = self.getThumbnailUrl(image, 'small');
+
+                imagesHtml += '<div class="media-item" data-type="image" data-id="' + image.id + '" data-full-url="' + image.url + '" onclick="void(0)">';
+
+                // Use picture element for responsive images
+                imagesHtml += '<picture class="media-item-picture">';
+
+                // Add WebP source if available
+                if (image.thumbnails && image.thumbnails.thumbnail_webp) {
+                    imagesHtml += '<source type="image/webp" srcset="' + image.thumbnails.thumbnail_webp + ' 1x, ' +
+                                  (image.thumbnails.small_webp || image.thumbnails.thumbnail_webp) + ' 2x">';
+                }
+
+                // Regular image with lazy loading
+                imagesHtml += '<img class="media-item-img lazy-load" ';
+                imagesHtml += 'data-src="' + thumbnailUrl + '" ';
+                imagesHtml += 'data-srcset="' + thumbnailUrl + ' 1x, ' + smallUrl + ' 2x" ';
+                imagesHtml += 'data-full-src="' + image.url + '" ';
+                imagesHtml += 'alt="' + image.filename + '" ';
+                imagesHtml += 'loading="lazy">';
+                imagesHtml += '</picture>';
+
+                // Placeholder for loading
+                imagesHtml += '<div class="media-item-placeholder"></div>';
+
                 imagesHtml += '<div class="media-item-overlay"><span class="media-item-checkmark">✓</span></div>';
                 imagesHtml += '<div class="media-item-label">' + image.filename + '</div>';
                 imagesHtml += '</div>';
             });
             $('#images-grid').html(imagesHtml);
 
-            // Render videos with onclick for Safari compatibility
+            // Render videos with poster images
             var videosHtml = '';
             $.each(this.mediaLibrary.videos, function(index, video) {
-                // Add onclick="void(0)" for better Safari event delegation support
+                // Get poster thumbnail or generate on demand
+                var posterUrl = self.getVideoPosterUrl(video, 'medium');
+                var posterThumbUrl = self.getVideoPosterUrl(video, 'thumbnail');
+
                 videosHtml += '<div class="video-item" data-type="video" data-id="' + video.id + '" data-url="' + video.url + '" onclick="void(0)">';
                 videosHtml += '<div class="video-item-preview">';
-                videosHtml += '<video class="media-video-element" src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
+
+                // Use poster image instead of loading video
+                if (posterUrl) {
+                    videosHtml += '<img class="video-poster lazy-load" ';
+                    videosHtml += 'data-src="' + posterThumbUrl + '" ';
+                    videosHtml += 'data-full-poster="' + posterUrl + '" ';
+                    videosHtml += 'data-video-url="' + video.url + '" ';
+                    videosHtml += 'alt="' + video.filename + '" ';
+                    videosHtml += 'loading="lazy">';
+                } else {
+                    // Fallback to video element if no poster
+                    videosHtml += '<video class="media-video-element" poster="' + posterUrl + '" muted preload="none" data-src="' + video.url + '"></video>';
+                }
+
                 videosHtml += '<div class="video-item-overlay"><span class="video-item-checkmark">✓</span></div>';
                 videosHtml += '</div>';
                 videosHtml += '<div class="video-item-info">';
                 videosHtml += '<div class="video-item-name">' + video.filename + '</div>';
                 videosHtml += '</div>';
-                videosHtml += '<button class="video-preview-btn" data-video-id="' + video.id + '" title="Play/Pause"><span class="video-icon">▶</span></button>';
+                videosHtml += '<button class="video-preview-btn" data-video-id="' + video.id + '" data-video-url="' + video.url + '" title="Play/Pause"><span class="video-icon">▶</span></button>';
                 videosHtml += '</div>';
             });
             $('#videos-grid').html(videosHtml);
 
-            // Render audio
+            // Render audio (no changes needed for audio)
             var audioHtml = '';
             $.each(this.mediaLibrary.audio, function(index, audio) {
                 audioHtml += '<div class="audio-item" data-type="audio" data-id="' + audio.id + '" data-url="' + audio.url + '">';
@@ -1529,7 +1570,20 @@
 
                 html += '<div class="gallery-card" data-cache-key="' + video.cache_key + '">';
                 html += '  <div class="gallery-card-video">';
-                html += '    <video src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
+
+                // Check if poster is available
+                var posterUrl = self.getGeneratedVideoPoster(video);
+                if (posterUrl) {
+                    // Use poster image instead of video for performance
+                    html += '    <div class="gallery-video-container" data-video-url="' + video.url + '">';
+                    html += '      <img class="gallery-video-poster lazy-load" data-src="' + posterUrl + '" alt="Video thumbnail" loading="lazy">';
+                    html += '      <div class="video-play-overlay"></div>';
+                    html += '    </div>';
+                } else {
+                    // Fallback to video element
+                    html += '    <video src="' + video.url + '#t=0.001" muted preload="none"></video>';
+                }
+
                 html += '    <div class="gallery-card-overlay">';
                 html += '      <button class="gallery-play-btn" data-cache-key="' + video.cache_key + '">▶</button>';
                 html += '    </div>';
@@ -2129,6 +2183,213 @@
                     $videoItem.removeClass('previewing');
                     this.currentPreviewVideo = null;
                 }.bind(this));
+            }
+        },
+
+        /**
+         * Get thumbnail URL for an image
+         */
+        getThumbnailUrl: function(image, size) {
+            // Check if thumbnails exist
+            if (image.thumbnails && !image.thumbnails.generate_on_demand) {
+                if (image.thumbnails[size]) {
+                    return image.thumbnails[size];
+                }
+            }
+
+            // Fallback to full image or trigger generation
+            if (image.thumbnails && image.thumbnails.generate_on_demand) {
+                // Queue for thumbnail generation
+                this.queueThumbnailGeneration(image.path, 'image', size);
+            }
+
+            // Return full URL as fallback
+            return image.url;
+        },
+
+        /**
+         * Get video poster URL
+         */
+        getVideoPosterUrl: function(video, size) {
+            // Check if posters exist
+            if (video.posters && !video.posters.generate_on_demand) {
+                if (video.posters[size]) {
+                    return video.posters[size];
+                }
+            }
+
+            // Queue for poster generation if needed
+            if (!video.posters || video.posters.generate_on_demand) {
+                this.queueThumbnailGeneration(video.path, 'video', size);
+                return null; // Will use video element as fallback
+            }
+
+            return null;
+        },
+
+        /**
+         * Queue thumbnail generation
+         */
+        queueThumbnailGeneration: function(mediaPath, mediaType, size) {
+            var self = this;
+
+            // Avoid duplicate requests
+            var queueKey = mediaPath + '_' + size;
+            if (this.thumbnailQueue && this.thumbnailQueue[queueKey]) {
+                return;
+            }
+
+            if (!this.thumbnailQueue) {
+                this.thumbnailQueue = {};
+            }
+            this.thumbnailQueue[queueKey] = true;
+
+            // Make AJAX request to generate thumbnail
+            $.ajax({
+                url: memoriansPoC.homeUrl + '/ffmpeg-poc/thumbnail/',
+                method: 'GET',
+                data: {
+                    media_path: mediaPath,
+                    media_type: mediaType,
+                    size: size
+                },
+                success: function(response) {
+                    if (response.success && response.thumbnail) {
+                        // Update the image source if element still exists
+                        self.updateThumbnailInDOM(mediaPath, response.thumbnail, mediaType);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Thumbnail generation failed:', error);
+                },
+                complete: function() {
+                    delete self.thumbnailQueue[queueKey];
+                }
+            });
+        },
+
+        /**
+         * Update thumbnail in DOM after generation
+         */
+        updateThumbnailInDOM: function(mediaPath, thumbnailData, mediaType) {
+            var filename = mediaPath.split('/').pop();
+
+            if (mediaType === 'image') {
+                var $img = $('.media-item[data-id="' + filename + '"] img');
+                if ($img.length && thumbnailData.url) {
+                    $img.attr('src', thumbnailData.url);
+                    if (thumbnailData.webp_url) {
+                        $img.closest('picture').find('source[type="image/webp"]').attr('srcset',
+                            thumbnailData.webp_url + ' 1x, ' + thumbnailData.webp_url + ' 2x');
+                    }
+                }
+            } else if (mediaType === 'video') {
+                var $poster = $('.video-item[data-id="' + filename + '"] .video-poster');
+                if ($poster.length && thumbnailData.url) {
+                    $poster.attr('src', thumbnailData.url);
+                }
+            }
+        },
+
+        /**
+         * Get poster URL for generated video
+         */
+        getGeneratedVideoPoster: function(video) {
+            // Check if poster exists in metadata
+            if (video.posters) {
+                if (video.posters.thumb) {
+                    return video.posters.thumb;
+                } else if (video.posters.poster) {
+                    return video.posters.poster;
+                }
+            }
+
+            // Try to generate poster on demand
+            var posterPath = video.cache_key ?
+                memoriansPoC.homeUrl + '/wp-content/plugins/memorians-poc/cache/posters/thumb/' + video.cache_key + '-thumb.jpg' :
+                null;
+
+            // Check if poster might exist (we can't check directly from JS)
+            if (posterPath && video.cache_key) {
+                // Queue generation if not exists
+                this.queueThumbnailGeneration(
+                    '/wp-content/plugins/memorians-poc/cache/' + video.cache_key + '.mp4',
+                    'generated_video',
+                    'thumb'
+                );
+                return posterPath; // Return expected path
+            }
+
+            return null;
+        },
+
+        /**
+         * Initialize lazy loading with Intersection Observer
+         */
+        initLazyLoading: function() {
+            var self = this;
+
+            // Check if Intersection Observer is supported
+            if (!('IntersectionObserver' in window)) {
+                // Fallback: load all images immediately
+                $('.lazy-load').each(function() {
+                    self.loadLazyImage($(this));
+                });
+                return;
+            }
+
+            // Create Intersection Observer
+            var imageObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var $img = $(entry.target);
+                        self.loadLazyImage($img);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                rootMargin: '50px 0px', // Start loading 50px before visible
+                threshold: 0.01
+            });
+
+            // Observe all lazy load images
+            $('.lazy-load').each(function() {
+                imageObserver.observe(this);
+            });
+        },
+
+        /**
+         * Load a lazy image
+         */
+        loadLazyImage: function($img) {
+            var src = $img.attr('data-src');
+            var srcset = $img.attr('data-srcset');
+
+            if (src) {
+                // Add loading class
+                $img.addClass('loading');
+
+                // Create new image to preload
+                var newImg = new Image();
+                newImg.onload = function() {
+                    $img.attr('src', src);
+                    if (srcset) {
+                        $img.attr('srcset', srcset);
+                    }
+                    $img.removeClass('loading').addClass('loaded');
+
+                    // Remove placeholder
+                    $img.closest('.media-item, .video-item').find('.media-item-placeholder').fadeOut();
+                };
+                newImg.onerror = function() {
+                    // On error, try to load full image
+                    var fullSrc = $img.attr('data-full-src');
+                    if (fullSrc && fullSrc !== src) {
+                        $img.attr('src', fullSrc);
+                    }
+                    $img.removeClass('loading');
+                };
+                newImg.src = src;
             }
         },
 
