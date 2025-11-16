@@ -761,13 +761,13 @@
                                   (image.thumbnails.small_webp || image.thumbnails.thumbnail_webp) + ' 2x">';
                 }
 
-                // Regular image with lazy loading
+                // Regular image with lazy loading - use transparent 1x1 pixel as placeholder
                 imagesHtml += '<img class="media-item-img lazy-load" ';
+                imagesHtml += 'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" ';
                 imagesHtml += 'data-src="' + thumbnailUrl + '" ';
                 imagesHtml += 'data-srcset="' + thumbnailUrl + ' 1x, ' + smallUrl + ' 2x" ';
                 imagesHtml += 'data-full-src="' + image.url + '" ';
-                imagesHtml += 'alt="' + image.filename + '" ';
-                imagesHtml += 'loading="lazy">';
+                imagesHtml += 'alt="' + image.filename + '">';
                 imagesHtml += '</picture>';
 
                 // Placeholder for loading
@@ -792,11 +792,11 @@
                 // Use poster image instead of loading video
                 if (posterUrl) {
                     videosHtml += '<img class="video-poster lazy-load" ';
+                    videosHtml += 'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" ';
                     videosHtml += 'data-src="' + posterThumbUrl + '" ';
                     videosHtml += 'data-full-poster="' + posterUrl + '" ';
                     videosHtml += 'data-video-url="' + video.url + '" ';
-                    videosHtml += 'alt="' + video.filename + '" ';
-                    videosHtml += 'loading="lazy">';
+                    videosHtml += 'alt="' + video.filename + '">';
                 } else {
                     // Fallback to video element if no poster
                     videosHtml += '<video class="media-video-element" poster="' + posterUrl + '" muted preload="none" data-src="' + video.url + '"></video>';
@@ -845,10 +845,23 @@
             $.each(this.mediaLibrary.backgrounds || [], function(index, bg) {
                 // Get thumbnail URL or use full image as fallback
                 var thumbnailUrl = self.getThumbnailUrl(bg, 'thumbnail');
+                var smallUrl = self.getThumbnailUrl(bg, 'small');
+
+                // For backgrounds, if no thumbnails exist yet, trigger generation
+                if (bg.thumbnails && bg.thumbnails.generate_on_demand) {
+                    // Use a more aggressive generation approach
+                    self.queueThumbnailGeneration(bg.path, 'image', 'thumbnail');
+                    self.queueThumbnailGeneration(bg.path, 'image', 'small');
+                }
 
                 backgroundHtml += '<div class="background-item" data-type="background" data-id="' + bg.id + '">';
                 backgroundHtml += '<div class="background-item-preview">';
-                backgroundHtml += '<img class="lazy-load" data-src="' + thumbnailUrl + '" alt="' + bg.filename + '" loading="lazy">';
+                // Always use placeholder initially, let lazy loading handle the rest
+                backgroundHtml += '<img class="lazy-load" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" ';
+                backgroundHtml += 'data-src="' + thumbnailUrl + '" ';
+                backgroundHtml += 'data-srcset="' + thumbnailUrl + ' 1x, ' + smallUrl + ' 2x" ';
+                backgroundHtml += 'data-full-src="' + bg.url + '" ';
+                backgroundHtml += 'alt="' + bg.filename + '">';
                 backgroundHtml += '<div class="media-item-placeholder"></div>';
                 backgroundHtml += '</div>';
                 backgroundHtml += '<div class="background-item-info">';
@@ -1580,7 +1593,7 @@
                 if (posterUrl) {
                     // Use poster image instead of video for performance
                     html += '    <div class="gallery-video-container" data-video-url="' + video.url + '">';
-                    html += '      <img class="gallery-video-poster lazy-load" data-src="' + posterUrl + '" alt="Video thumbnail" loading="lazy">';
+                    html += '      <img class="gallery-video-poster lazy-load" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="' + posterUrl + '" alt="Video thumbnail">';
                     html += '      <div class="video-play-overlay"></div>';
                     html += '    </div>';
                 } else {

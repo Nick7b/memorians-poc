@@ -88,9 +88,15 @@ class Memorians_POC_Thumbnail_Generator {
         $filename = basename($source_path);
         $name_parts = pathinfo($filename);
 
+        // Determine the media type from path
+        $media_type = 'images';  // default
+        if (strpos($source_path, '/bg_images/') !== false) {
+            $media_type = 'bg_images';
+        }
+
         // Generate thumbnail filename
         $thumb_filename = $name_parts['filename'] . '-' . $size . '.' . $name_parts['extension'];
-        $thumb_dir = $this->media_dir . 'images/thumbs/' . $size_config['width'] . '/';
+        $thumb_dir = $this->media_dir . $media_type . '/thumbs/' . $size_config['width'] . '/';
         $thumb_path = $thumb_dir . $thumb_filename;
 
         // Check if thumbnail already exists
@@ -310,8 +316,9 @@ class Memorians_POC_Thumbnail_Generator {
         // Use FFmpeg to extract frame
         $temp_poster = sys_get_temp_dir() . '/' . uniqid('poster_') . '.jpg';
 
+        // Use crop instead of pad to avoid black borders
         $cmd = sprintf(
-            'ffmpeg -ss %s -i %s -vframes 1 -vf "scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2" -q:v 2 %s 2>&1',
+            'ffmpeg -ss %s -i %s -vframes 1 -vf "scale=w=%d:h=%d:force_original_aspect_ratio=increase,crop=%d:%d" -q:v 2 %s 2>&1',
             escapeshellarg($timestamp),
             escapeshellarg($video_path),
             $size_config['width'],
@@ -361,8 +368,9 @@ class Memorians_POC_Thumbnail_Generator {
             }
 
             // Extract frame at 2 seconds (usually past any fade-in)
+            // Use crop instead of pad to avoid black borders
             $cmd = sprintf(
-                'ffmpeg -ss 2 -i %s -vframes 1 -vf "scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2" -q:v 2 %s 2>&1',
+                'ffmpeg -ss 2 -i %s -vframes 1 -vf "scale=w=%d:h=%d:force_original_aspect_ratio=increase,crop=%d:%d" -q:v 2 %s 2>&1',
                 escapeshellarg($video_path),
                 $config['width'],
                 $config['height'],

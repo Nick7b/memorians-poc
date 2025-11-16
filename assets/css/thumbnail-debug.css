@@ -1,0 +1,47 @@
+/* Diagnostic CSS to debug thumbnail visibility */
+
+/* Force visibility on picture elements and images */
+.media-item picture {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 150px !important;
+    background: rgba(255, 0, 0, 0.1); /* Red tint to show picture element */
+}
+
+.media-item picture img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 150px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: 10 !important;
+    object-fit: cover !important;
+    background: rgba(0, 255, 0, 0.1); /* Green tint to show img element */
+}
+
+/* Debug: Show element boundaries */
+.media-item {
+    border: 2px solid blue !important;
+    min-height: 150px !important;
+}
+
+.media-item-picture {
+    border: 2px solid red !important;
+}
+
+.media-item-img {
+    border: 2px solid green !important;
+}
+
+/* Ensure no absolute positioning issues */
+.media-item * {
+    position: relative !important;
+}
+
+/* Force placeholder to hide */
+.media-item-placeholder {
+    display: none !important;
+}
