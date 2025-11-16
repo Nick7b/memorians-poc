@@ -841,11 +841,15 @@
             backgroundHtml += '<div class="background-item-checkmark">✓</div>';
             backgroundHtml += '</div>';
 
-            // Add actual background images
+            // Add actual background images with lazy loading
             $.each(this.mediaLibrary.backgrounds || [], function(index, bg) {
+                // Get thumbnail URL or use full image as fallback
+                var thumbnailUrl = self.getThumbnailUrl(bg, 'thumbnail');
+
                 backgroundHtml += '<div class="background-item" data-type="background" data-id="' + bg.id + '">';
                 backgroundHtml += '<div class="background-item-preview">';
-                backgroundHtml += '<img src="' + bg.url + '" alt="' + bg.filename + '">';
+                backgroundHtml += '<img class="lazy-load" data-src="' + thumbnailUrl + '" alt="' + bg.filename + '" loading="lazy">';
+                backgroundHtml += '<div class="media-item-placeholder"></div>';
                 backgroundHtml += '</div>';
                 backgroundHtml += '<div class="background-item-info">';
                 backgroundHtml += '<div class="background-item-name">' + bg.filename + '</div>';
@@ -2125,6 +2129,9 @@
             $('#video-container').hide();
             $('#controls-panel').hide();
             $('#info-panel').hide();
+
+            // Initialize lazy loading for gallery images
+            this.initLazyLoading();
         },
 
         showEmptyGallery: function() {
