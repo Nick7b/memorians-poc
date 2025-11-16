@@ -1440,9 +1440,34 @@
                 var imageCount = video.selection && video.selection.images ? video.selection.images.length : 0;
                 var videoCount = video.selection && video.selection.videos ? video.selection.videos.length : 1;
 
-                // Determine preset used
+                // Determine preset used - check new metadata structure first
                 var preset = 'Classic'; // Default
-                if (video.selection && video.selection.settings) {
+                var hasSettings = false;
+
+                // Check for new metadata structure with full settings
+                if (video.settings) {
+                    hasSettings = true;
+                    // Use the preset detection from metadata if available
+                    if (video.generated_with && video.generated_with.preset_used) {
+                        preset = video.generated_with.preset_used;
+                        preset = preset.charAt(0).toUpperCase() + preset.slice(1); // Capitalize
+                    } else {
+                        // Fallback to manual detection
+                        var settings = video.settings;
+                        if (settings.frameRate === 24 && settings.imageDuration === 6) {
+                            preset = 'Cinematic';
+                        } else if (settings.imageScale === 0.6 && settings.videoScale === 0.6) {
+                            preset = 'Minimal';
+                        } else if (settings.imageScale === 1.2 && settings.videoScale === 1.2) {
+                            preset = 'Dynamic';
+                        } else if (settings.imageScale !== 1.0 || settings.videoScale !== 1.0 ||
+                                  settings.imageDuration !== 4 || settings.frameRate !== 30) {
+                            preset = 'Custom';
+                        }
+                    }
+                } else if (video.selection && video.selection.settings) {
+                    // Legacy format
+                    hasSettings = true;
                     var settings = video.selection.settings;
                     // Check for preset patterns
                     if (settings.frameRate === 24 && settings.imageDuration === 6) {
@@ -1478,6 +1503,10 @@
                 html += '    </div>';
                 html += '    <div class="gallery-card-actions">';
                 html += '      <button class="gallery-action-btn gallery-play-action" data-cache-key="' + video.cache_key + '">Play</button>';
+                if (hasSettings) {
+                    html += '      <button class="gallery-action-btn gallery-settings-action" data-cache-key="' + video.cache_key + '" data-video-index="' + index + '">Settings</button>';
+                    html += '      <button class="gallery-action-btn gallery-copy-action" data-cache-key="' + video.cache_key + '" data-video-index="' + index + '">Copy</button>';
+                }
                 html += '      <button class="gallery-action-btn gallery-delete-action" data-cache-key="' + video.cache_key + '">Delete</button>';
                 html += '    </div>';
                 html += '  </div>';
@@ -1495,6 +1524,18 @@
             $('.gallery-delete-action').on('click', function() {
                 var cacheKey = $(this).data('cache-key');
                 self.deleteGalleryVideo(cacheKey);
+            });
+
+            // Settings button click handler
+            $('.gallery-settings-action').on('click', function() {
+                var videoIndex = $(this).data('video-index');
+                self.showVideoSettings(videoIndex);
+            });
+
+            // Copy settings button click handler
+            $('.gallery-copy-action').on('click', function() {
+                var videoIndex = $(this).data('video-index');
+                self.copyVideoSettings(videoIndex);
             });
         },
 
@@ -1540,6 +1581,282 @@
                     console.error('Delete error:', status, error);
                 }
             });
+        },
+
+        showVideoSettings: function(videoIndex) {
+            var video = this.videoGallery[videoIndex];
+            if (!video) return;
+
+            // Get settings from new or legacy format
+            var settings = video.settings || (video.selection && video.selection.settings) || {};
+            var selection = video.selection || {};
+
+            // Build settings display
+            var html = '<div class="settings-modal-overlay" id="settings-modal">';
+            html += '<div class="settings-modal">';
+            html += '  <div class="settings-modal-header">';
+            html += '    <h3>Video Generation Settings</h3>';
+            html += '    <button class="close-modal">&times;</button>';
+            html += '  </div>';
+            html += '  <div class="settings-modal-content">';
+
+            // Template and preset info
+            html += '  <div class="settings-section">';
+            html += '    <h4>General Information</h4>';
+            html += '    <div class="settings-grid">';
+            html += '      <div class="setting-item"><strong>Template:</strong> ' + (video.template || 'classic') + '</div>';
+            if (video.generated_with && video.generated_with.preset_used) {
+                html += '      <div class="setting-item"><strong>Preset Used:</strong> ' + video.generated_with.preset_used + '</div>';
+            }
+            html += '      <div class="setting-item"><strong>Media Count:</strong> ' + (video.media_count || 'N/A') + '</div>';
+            html += '    </div>';
+            html += '  </div>';
+
+            // Basic Settings
+            html += '  <div class="settings-section">';
+            html += '    <h4>Basic Settings</h4>';
+            html += '    <div class="settings-grid">';
+            html += '      <div class="setting-item"><strong>Image Scale:</strong> ' + (settings.imageScale || 1.0) + 'x</div>';
+            html += '      <div class="setting-item"><strong>Video Scale:</strong> ' + (settings.videoScale || 1.0) + 'x</div>';
+            html += '      <div class="setting-item"><strong>Image Duration:</strong> ' + (settings.imageDuration || 4) + 's</div>';
+            html += '      <div class="setting-item"><strong>Transition Duration:</strong> ' + (settings.transitionDuration || 1) + 's</div>';
+            html += '      <div class="setting-item"><strong>Frame Rate:</strong> ' + (settings.frameRate || 30) + ' fps</div>';
+            html += '      <div class="setting-item"><strong>Ken Burns Intensity:</strong> ' + (settings.kenBurnsIntensity || 1.0) + 'x</div>';
+            html += '    </div>';
+            html += '  </div>';
+
+            // Advanced Settings if available
+            if (settings.advancedOptions) {
+                html += '  <div class="settings-section">';
+                html += '    <h4>Advanced Options</h4>';
+                if (settings.advancedOptions.overrideDefaults) {
+                    html += '    <p class="settings-note">Custom selections were used:</p>';
+                    if (settings.advancedOptions.transitions && settings.advancedOptions.transitions.length > 0) {
+                        html += '    <div class="setting-item"><strong>Transitions:</strong> ' + settings.advancedOptions.transitions.join(', ') + '</div>';
+                    }
+                    if (settings.advancedOptions.kenBurns && settings.advancedOptions.kenBurns.length > 0) {
+                        html += '    <div class="setting-item"><strong>Ken Burns Patterns:</strong> ' + settings.advancedOptions.kenBurns.join(', ') + '</div>';
+                    }
+                } else {
+                    html += '    <p class="settings-note">Template defaults were used</p>';
+                }
+                html += '  </div>';
+            }
+
+            // Quality Settings
+            html += '  <div class="settings-section">';
+            html += '    <h4>Quality Settings</h4>';
+            html += '    <div class="settings-grid">';
+            html += '      <div class="setting-item"><strong>Video Quality:</strong> ' + (settings.videoQuality || 'medium') + '</div>';
+            html += '      <div class="setting-item"><strong>Resolution:</strong> ' + (settings.outputResolution || '1080p') + '</div>';
+            html += '      <div class="setting-item"><strong>Music Volume:</strong> ' + (settings.musicVolume || 80) + '%</div>';
+            html += '      <div class="setting-item"><strong>Audio Fade:</strong> ' + (settings.audioFade ? 'Yes' : 'No') + '</div>';
+            html += '    </div>';
+            html += '  </div>';
+
+            // Media Selection
+            html += '  <div class="settings-section">';
+            html += '    <h4>Media Selection</h4>';
+            html += '    <div class="settings-grid">';
+            if (selection.images && selection.images.length > 0) {
+                html += '      <div class="setting-item"><strong>Images:</strong> ' + selection.images.length + ' selected</div>';
+            }
+            if (selection.videos && selection.videos.length > 0) {
+                html += '      <div class="setting-item"><strong>Videos:</strong> ' + selection.videos.length + ' selected</div>';
+            }
+            if (selection.audio) {
+                html += '      <div class="setting-item"><strong>Audio:</strong> ' + selection.audio + '</div>';
+            }
+            if (selection.background) {
+                html += '      <div class="setting-item"><strong>Background:</strong> ' + selection.background + '</div>';
+            }
+            html += '    </div>';
+            html += '  </div>';
+
+            html += '  </div>';
+            html += '  <div class="settings-modal-footer">';
+            html += '    <button class="button button-primary copy-settings-btn" data-video-index="' + videoIndex + '">Copy These Settings</button>';
+            html += '    <button class="button close-modal">Close</button>';
+            html += '  </div>';
+            html += '</div>';
+            html += '</div>';
+
+            // Add modal to page
+            $('body').append(html);
+
+            // Bind close events
+            $('#settings-modal .close-modal').on('click', function() {
+                $('#settings-modal').remove();
+            });
+
+            // Bind copy settings button in modal
+            $('#settings-modal .copy-settings-btn').on('click', function() {
+                var index = $(this).data('video-index');
+                $('#settings-modal').remove();
+                MemoriansVideoPlayer.copyVideoSettings(index);
+            });
+
+            // Close on overlay click
+            $('#settings-modal').on('click', function(e) {
+                if ($(e.target).hasClass('settings-modal-overlay')) {
+                    $('#settings-modal').remove();
+                }
+            });
+        },
+
+        copyVideoSettings: function(videoIndex) {
+            var video = this.videoGallery[videoIndex];
+            if (!video) return;
+
+            // Get settings from new or legacy format
+            var settings = video.settings || (video.selection && video.selection.settings) || {};
+            var selection = video.selection || {};
+
+            // Apply settings to the form
+            this.applySettingsToForm(settings, selection, video.template);
+
+            // Show notification
+            this.showNotification('Settings copied! The generation form has been updated with the copied settings.');
+
+            // Scroll to media selection panel
+            $('html, body').animate({
+                scrollTop: $('#media-selection-panel').offset().top - 20
+            }, 500);
+
+            // If not already in edit mode, switch to it
+            if (!$('#media-selection-panel').is(':visible')) {
+                this.showMediaSelection();
+            }
+        },
+
+        applySettingsToForm: function(settings, selection, template) {
+            // Apply template
+            if (template) {
+                $('#template-style-selection').val(template);
+                this.currentTemplate = template;
+                this.updateTemplateDescription(template);
+            }
+
+            // Apply basic settings
+            if (settings.imageScale !== undefined) {
+                $('#image-scale').val(settings.imageScale);
+                $('#image-scale-value').text(settings.imageScale + 'x');
+                this.settings.imageScale = settings.imageScale;
+            }
+            if (settings.videoScale !== undefined) {
+                $('#video-scale').val(settings.videoScale);
+                $('#video-scale-value').text(settings.videoScale + 'x');
+                this.settings.videoScale = settings.videoScale;
+            }
+            if (settings.imageDuration !== undefined) {
+                $('#image-duration').val(settings.imageDuration);
+                $('#image-duration-value').text(settings.imageDuration + 's');
+                this.settings.imageDuration = settings.imageDuration;
+            }
+            if (settings.transitionDuration !== undefined) {
+                $('#transition-duration').val(settings.transitionDuration);
+                $('#transition-duration-value').text(settings.transitionDuration + 's');
+                this.settings.transitionDuration = settings.transitionDuration;
+            }
+
+            // Apply advanced settings
+            if (settings.kenBurnsIntensity !== undefined) {
+                $('#ken-burns-intensity').val(settings.kenBurnsIntensity);
+                $('#ken-burns-value').text(settings.kenBurnsIntensity + 'x');
+                this.settings.kenBurnsIntensity = settings.kenBurnsIntensity;
+            }
+            if (settings.backgroundBlur !== undefined) {
+                $('#background-blur').val(settings.backgroundBlur);
+                $('#background-blur-value').text(settings.backgroundBlur + 'px');
+                this.settings.backgroundBlur = settings.backgroundBlur;
+            }
+            if (settings.mediaShadow !== undefined) {
+                $('#media-shadow').prop('checked', settings.mediaShadow);
+                this.settings.mediaShadow = settings.mediaShadow;
+            }
+            if (settings.paddingColor !== undefined) {
+                $('#padding-color').val(settings.paddingColor);
+                $('#padding-color').next('.color-value').text(settings.paddingColor);
+                this.settings.paddingColor = settings.paddingColor;
+            }
+
+            // Apply quality settings
+            if (settings.videoQuality !== undefined) {
+                $('#video-quality').val(settings.videoQuality);
+                this.settings.videoQuality = settings.videoQuality;
+            }
+            if (settings.outputResolution !== undefined) {
+                $('#output-resolution').val(settings.outputResolution);
+                this.settings.outputResolution = settings.outputResolution;
+            }
+            if (settings.frameRate !== undefined) {
+                $('#frame-rate').val(settings.frameRate);
+                this.settings.frameRate = settings.frameRate;
+            }
+            if (settings.musicVolume !== undefined) {
+                $('#music-volume').val(settings.musicVolume);
+                $('#music-volume-value').text(settings.musicVolume + '%');
+                this.settings.musicVolume = settings.musicVolume;
+            }
+            if (settings.audioFade !== undefined) {
+                $('#audio-fade').prop('checked', settings.audioFade);
+                this.settings.audioFade = settings.audioFade;
+            }
+
+            // Apply Advanced Options if present
+            if (settings.advancedOptions) {
+                this.advancedOptions = settings.advancedOptions;
+
+                if (settings.advancedOptions.overrideDefaults) {
+                    $('#override-defaults').prop('checked', true);
+                    $('#advanced-status-text').text('Custom Selection');
+                    $('.transitions-group, .kenburns-group').removeClass('disabled');
+                    $('.transition-checkbox, .kenburns-checkbox').prop('disabled', false);
+
+                    // Apply custom transitions
+                    if (settings.advancedOptions.transitions) {
+                        $('.transition-checkbox').prop('checked', false);
+                        settings.advancedOptions.transitions.forEach(function(transition) {
+                            $('#trans-' + transition).prop('checked', true);
+                        });
+                        this.updateSelectedTransitions();
+                    }
+
+                    // Apply custom Ken Burns patterns
+                    if (settings.advancedOptions.kenBurns) {
+                        $('.kenburns-checkbox').prop('checked', false);
+                        settings.advancedOptions.kenBurns.forEach(function(pattern) {
+                            $('#kb-' + pattern.replace('_', '')).prop('checked', true);
+                        });
+                        this.updateSelectedKenBurns();
+                    }
+                } else {
+                    $('#override-defaults').prop('checked', false);
+                    $('#advanced-status-text').text('Template Defaults');
+                    $('.transitions-group, .kenburns-group').addClass('disabled');
+                    $('.transition-checkbox, .kenburns-checkbox').prop('disabled', true);
+                }
+            }
+
+            // Note: We don't copy media selection as that would be specific to each video
+            // But we could add that as an option if needed
+
+            // Mark preset as custom since we're loading settings from another video
+            $('#preset-config').val('custom');
+            $('#preset-description').text('Settings copied from existing video');
+            $('#current-preset').text('Custom');
+        },
+
+        showNotification: function(message) {
+            var notification = $('<div class="notification">' + message + '</div>');
+            $('body').append(notification);
+            notification.fadeIn(300);
+
+            setTimeout(function() {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 3000);
         },
 
         startNewVideo: function() {

@@ -129,11 +129,17 @@ class Memorians_POC_Video_Generator {
             return $result;
         }
 
-        // Save metadata for this video
+        // Save complete metadata including all settings for this video
         $metadata = array(
             'template' => $template,
             'selection' => $selection,
-            'media_count' => count($media['sequence'])
+            'media_count' => count($media['sequence']),
+            'settings' => $this->settings, // Complete settings including Advanced Options
+            'generated_with' => array(
+                'version' => MEMORIANS_POC_VERSION,
+                'timestamp' => time(),
+                'preset_used' => $this->detect_preset_from_settings($this->settings)
+            )
         );
         $this->cache_manager->save_metadata($cache_key, $metadata);
 
@@ -591,6 +597,66 @@ class Memorians_POC_Video_Generator {
             'message' => 'Video generation started in background',
             'pid' => $pid
         );
+    }
+
+    /**
+     * Detect which preset was used based on settings
+     *
+     * @param array $settings Current settings
+     * @return string Preset name or 'custom'
+     */
+    private function detect_preset_from_settings($settings) {
+        // Define preset signatures
+        $presets = array(
+            'classic' => array(
+                'imageScale' => 1.0,
+                'videoScale' => 1.0,
+                'imageDuration' => 4,
+                'transitionDuration' => 1,
+                'kenBurnsIntensity' => 1.0,
+                'frameRate' => 30
+            ),
+            'cinematic' => array(
+                'imageScale' => 0.8,
+                'videoScale' => 0.9,
+                'imageDuration' => 6,
+                'transitionDuration' => 2,
+                'kenBurnsIntensity' => 1.5,
+                'frameRate' => 24
+            ),
+            'minimal' => array(
+                'imageScale' => 0.6,
+                'videoScale' => 0.6,
+                'imageDuration' => 3,
+                'transitionDuration' => 0.5,
+                'kenBurnsIntensity' => 0.5,
+                'frameRate' => 30
+            ),
+            'dynamic' => array(
+                'imageScale' => 1.2,
+                'videoScale' => 1.2,
+                'imageDuration' => 3,
+                'transitionDuration' => 1.5,
+                'kenBurnsIntensity' => 2.0,
+                'frameRate' => 60
+            )
+        );
+
+        // Check each preset
+        foreach ($presets as $preset_name => $preset_values) {
+            $matches = true;
+            foreach ($preset_values as $key => $value) {
+                if (!isset($settings[$key]) || abs($settings[$key] - $value) > 0.01) {
+                    $matches = false;
+                    break;
+                }
+            }
+            if ($matches) {
+                return $preset_name;
+            }
+        }
+
+        return 'custom';
     }
 
     /**
