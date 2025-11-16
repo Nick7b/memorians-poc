@@ -1,0 +1,26 @@
+# Bypass WordPress rewrites for MP4 files
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+# Set proper MIME type for MP4 videos
+<IfModule mod_mime.c>
+    AddType video/mp4 .mp4
+</IfModule>
+
+# Enable range requests for video seeking
+<IfModule mod_headers.c>
+    Header set Accept-Ranges bytes
+    Header set Cache-Control "public, max-age=86400"
+</IfModule>
+
+# Deny access by default
+Order deny,allow
+Deny from all
+
+# Allow access to MP4 videos only
+<FilesMatch "\.mp4$">
+    Order allow,deny
+    Allow from all
+    Satisfy Any
+</FilesMatch>
