@@ -2260,7 +2260,15 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Thumbnail generation failed:', error);
+                    if (xhr.status === 404) {
+                        console.error('Thumbnail endpoint not found (404). Please flush WordPress rewrite rules:');
+                        console.error('1. Go to Settings > Permalinks in WordPress admin');
+                        console.error('2. Click "Save Changes" to flush rewrite rules');
+                        console.error('3. Or visit /wp-content/plugins/memorians-poc/flush-rules.php');
+                    } else {
+                        console.error('Thumbnail generation failed:', error);
+                        console.error('Response:', xhr.responseText);
+                    }
                 },
                 complete: function() {
                     delete self.thumbnailQueue[queueKey];

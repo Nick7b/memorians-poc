@@ -51,6 +51,9 @@ function memorians_poc_activate() {
         wp_mkdir_p(MEMORIANS_POC_CACHE_DIR);
     }
 
+    // Store version for auto-flush on updates
+    update_option('memorians_poc_version', MEMORIANS_POC_VERSION);
+
     // Create .htaccess to allow MP4 access but deny other files
     $htaccess_path = MEMORIANS_POC_CACHE_DIR . '.htaccess';
     $htaccess_content = "# Deny access by default\nOrder deny,allow\nDeny from all\n\n# Allow access to MP4 videos only\n<FilesMatch \"\\.mp4$\">\n    Order allow,deny\n    Allow from all\n</FilesMatch>";
@@ -138,6 +141,23 @@ function memorians_poc_rewrite_rules() {
     add_rewrite_tag('%memorians_poc_page%', '([^&]+)');
 }
 add_action('init', 'memorians_poc_rewrite_rules');
+
+/**
+ * Auto-flush rewrite rules if plugin version changed
+ */
+function memorians_poc_check_version() {
+    $stored_version = get_option('memorians_poc_version');
+
+    if ($stored_version !== MEMORIANS_POC_VERSION) {
+        // Version changed, flush rules
+        memorians_poc_rewrite_rules();
+        flush_rewrite_rules();
+        update_option('memorians_poc_version', MEMORIANS_POC_VERSION);
+
+        error_log('Memorians POC: Flushed rewrite rules for version ' . MEMORIANS_POC_VERSION);
+    }
+}
+add_action('init', 'memorians_poc_check_version', 20);
 
 /**
  * Handle template redirect

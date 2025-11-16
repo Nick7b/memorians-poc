@@ -11,6 +11,10 @@ ini_set('log_errors', 1);
 
 header('Content-Type: application/json');
 
+// Log that endpoint was reached
+error_log('Thumbnail AJAX endpoint accessed');
+error_log('Request params: ' . json_encode($_GET));
+
 try {
     // Validate request
     if (!isset($_GET['media_path']) || !isset($_GET['media_type'])) {
