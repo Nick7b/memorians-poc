@@ -1265,12 +1265,33 @@
                 var imageCount = video.selection && video.selection.images ? video.selection.images.length : 0;
                 var videoCount = video.selection && video.selection.videos ? video.selection.videos.length : 1;
 
+                // Determine preset used
+                var preset = 'Classic'; // Default
+                if (video.selection && video.selection.settings) {
+                    var settings = video.selection.settings;
+                    // Check for preset patterns
+                    if (settings.frameRate === 24 && settings.imageDuration === 6) {
+                        preset = 'Cinematic';
+                    } else if (settings.imageScale === 0.6 && settings.videoScale === 0.6) {
+                        preset = 'Minimal';
+                    } else if (settings.imageScale === 1.2 && settings.videoScale === 1.2) {
+                        preset = 'Dynamic';
+                    } else if (settings.imageScale !== 1.0 || settings.videoScale !== 1.0 ||
+                              settings.imageDuration !== 4 || settings.frameRate !== 30) {
+                        preset = 'Custom';
+                    }
+                }
+
+                // Preset badge color
+                var presetClass = 'preset-' + preset.toLowerCase();
+
                 html += '<div class="gallery-card" data-cache-key="' + video.cache_key + '">';
                 html += '  <div class="gallery-card-video">';
                 html += '    <video src="' + video.url + '#t=0.001" muted preload="metadata"></video>';
                 html += '    <div class="gallery-card-overlay">';
-                html += '      <button class="gallery-play-btn" data-cache-key="' + video.cache_key + '">▶ Play</button>';
+                html += '      <button class="gallery-play-btn" data-cache-key="' + video.cache_key + '">▶</button>';
                 html += '    </div>';
+                html += '    <span class="gallery-preset-badge ' + presetClass + '">' + preset + '</span>';
                 html += '  </div>';
                 html += '  <div class="gallery-card-info">';
                 html += '    <div class="gallery-card-meta">';
@@ -1278,11 +1299,11 @@
                 html += '      <span class="gallery-size">' + sizeStr + '</span>';
                 html += '    </div>';
                 html += '    <div class="gallery-card-details">';
-                html += '      <span>Template: ' + (video.template || 'classic') + '</span>';
-                html += '      <span>' + imageCount + ' images, ' + videoCount + ' video' + (videoCount > 1 ? 's' : '') + '</span>';
+                html += '      <span class="gallery-media-count">' + imageCount + ' images, ' + videoCount + ' video' + (videoCount > 1 ? 's' : '') + '</span>';
                 html += '    </div>';
                 html += '    <div class="gallery-card-actions">';
-                html += '      <button class="gallery-delete-btn" data-cache-key="' + video.cache_key + '">Delete</button>';
+                html += '      <button class="gallery-action-btn gallery-play-action" data-cache-key="' + video.cache_key + '">Play</button>';
+                html += '      <button class="gallery-action-btn gallery-delete-action" data-cache-key="' + video.cache_key + '">Delete</button>';
                 html += '    </div>';
                 html += '  </div>';
                 html += '</div>';
@@ -1291,12 +1312,12 @@
             $('#gallery-grid').html(html);
 
             // Bind click events
-            $('.gallery-play-btn').on('click', function() {
+            $('.gallery-play-btn, .gallery-play-action').on('click', function() {
                 var cacheKey = $(this).data('cache-key');
                 self.playGalleryVideo(cacheKey);
             });
 
-            $('.gallery-delete-btn').on('click', function() {
+            $('.gallery-delete-action').on('click', function() {
                 var cacheKey = $(this).data('cache-key');
                 self.deleteGalleryVideo(cacheKey);
             });

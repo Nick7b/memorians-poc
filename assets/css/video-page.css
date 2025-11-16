@@ -910,9 +910,17 @@ body.memorians-poc-page {
 
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     padding: 10px;
+}
+
+/* Tablet - 2 columns with smaller minimum */
+@media (max-width: 1024px) {
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
 }
 
 /* Mobile responsive - single column on small screens */
@@ -947,17 +955,46 @@ body.memorians-poc-page {
 
 .gallery-card-video {
     position: relative;
-    aspect-ratio: 9 / 16; /* Portrait aspect ratio for mobile videos */
+    aspect-ratio: 16 / 9; /* Landscape for more compact view */
     background: #000;
     overflow: hidden;
-    max-height: 500px; /* Prevent overly tall cards on desktop */
+    border-radius: 10px 10px 0 0;
 }
 
-/* Desktop - limit portrait video height */
-@media (min-width: 1024px) {
-    .gallery-card-video {
-        max-height: 400px;
-    }
+/* Preset badge */
+.gallery-preset-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+.gallery-preset-badge.preset-classic {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.gallery-preset-badge.preset-cinematic {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.gallery-preset-badge.preset-minimal {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.gallery-preset-badge.preset-dynamic {
+    background: linear-gradient(135deg, #fa709a, #fee140);
+}
+
+.gallery-preset-badge.preset-custom {
+    background: linear-gradient(135deg, #30cfd0, #330867);
 }
 
 .gallery-card-video video {
@@ -985,85 +1022,115 @@ body.memorians-poc-page {
 }
 
 .gallery-play-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
     border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-size: 1.1em;
-    font-weight: 600;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5em;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .gallery-play-btn:hover {
     transform: scale(1.1);
+    background: white;
     box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
 .gallery-card-info {
-    padding: 20px;
+    padding: 15px;
 }
 
 /* Mobile - reduce padding */
 @media (max-width: 640px) {
     .gallery-card-info {
-        padding: 15px;
+        padding: 12px;
     }
 }
 
 .gallery-card-meta {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 0.9em;
+    margin-bottom: 8px;
+    font-size: 0.8em;
     color: #718096;
     flex-wrap: wrap;
     gap: 5px;
 }
 
+.gallery-date {
+    font-weight: 500;
+}
+
+.gallery-size {
+    color: #a0aec0;
+}
+
 /* Mobile - smaller font */
 @media (max-width: 640px) {
     .gallery-card-meta {
-        font-size: 0.85em;
+        font-size: 0.75em;
     }
 }
 
 .gallery-card-details {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 15px;
-    font-size: 0.95em;
+    margin-bottom: 12px;
+    font-size: 0.85em;
     color: #4a5568;
+}
+
+.gallery-media-count {
+    display: block;
+    margin-top: 4px;
 }
 
 /* Mobile - smaller font */
 @media (max-width: 640px) {
     .gallery-card-details {
-        font-size: 0.9em;
+        font-size: 0.8em;
     }
 }
 
 .gallery-card-actions {
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+    gap: 8px;
+    justify-content: space-between;
 }
 
-.gallery-delete-btn {
-    background: #f56565;
-    color: white;
+.gallery-action-btn {
+    flex: 1;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: 8px;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.gallery-delete-btn:hover {
-    background: #e53e3e;
+.gallery-play-action {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.gallery-play-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.gallery-delete-action {
+    background: #f7fafc;
+    color: #e53e3e;
+    border: 1px solid #feb2b2;
+}
+
+.gallery-delete-action:hover {
+    background: #fed7d7;
     transform: translateY(-2px);
 }
 
